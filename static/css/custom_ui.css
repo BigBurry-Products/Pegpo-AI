@@ -1,0 +1,172 @@
+:root {
+    /* --- SIDEBAR STYLES --- */
+    /* Sidebar color: rgba(31, 33, 33, 1) or #1F2121 */
+    --sidebar-bg: #1F2121; 
+    --inactive-btn-bg: #2A2E2D; /* Used for buttons and active link background, kept dark for contrast */
+    --avatar-ai-bg: #6F7574; 
+    --sidebar-width: 90px;
+    --sep-color: rgba(135, 135, 135, 0.25);
+    --inactive-icon-color: rgba(255, 255, 255, 0.6);
+    --active-icon-color: #FFFFFF;
+
+    /* --- CHAT AREA STYLES --- */
+    /* Input Rectangle color: rgba(31, 33, 33, 1) or #1F2121 */
+    --chat-rect-bg: #1F2121; 
+    --chat-border-color: rgba(111, 117, 116, 0.4); 
+    /* Placeholder text color: Increased from 0.35 to 0.6 for better visibility */
+    --placeholder-color: rgba(255, 255, 255, 0.6); 
+    --pill-bg: #2A2E2D; /* Used for control pill and action pills background */
+}
+
+/* 1. Sidebar Styling */
+#sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background-color: var(--sidebar-bg) !important;
+    border-color: #1A1A1A !important;
+    height: 100vh;
+}
+.sidebar-icon-wrapper { /* General icon container 50x50 */
+    width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; cursor: pointer;
+}
+.avatar-ai { /* Avatar 55x55 */
+    width: 55px; height: 55px; background-color: var(--avatar-ai-bg); border-radius: 50%; display: flex; justify-content: center; align-items: center;
+}
+.new-btn { /* Plus button 50x50 */
+    width: 50px; height: 50px; background-color: var(--inactive-btn-bg); border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 0; border: none;
+}
+.nav-link-item { /* Sidebar Nav links 10px font */
+    display: flex; flex-direction: column; align-items: center; padding: 10px 0; text-decoration: none; color: var(--inactive-icon-color); font-size: 10px; font-weight: 500;
+}
+.nav-link-item.active .sidebar-icon-wrapper { background-color: var(--inactive-btn-bg); }
+.nav-link-item.active { color: var(--active-icon-color); font-weight: 600; }
+.utility-link { width: 30px; height: 30px; opacity: 0.55; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+.utility-link.alarm { opacity: 0.50; }
+.sidebar-separator { width: 55px; height: 1px; background-color: var(--sep-color); margin: 10px auto; }
+
+/* 2. Main Area / Chat Input Styling */
+.main-area-container {
+    padding-top: 5rem; /* Pushes the content down from the top logo */
+}
+
+/* Rectangle 4: The main chat input wrapper */
+.chat-rect-container {
+    width: 761px;
+    max-width: 95%; /* Added for responsiveness */
+    height: 146px;
+    border-radius: 23px;
+    background-color: var(--chat-rect-bg) !important;
+    border: 1px solid var(--chat-border-color);
+}
+
+.chat-placeholder-text {
+    color: var(--placeholder-color);
+    font-size: 18px; /* Ask anything. 18px */
+    font-weight: 400;
+    line-height: 1.5; /* To simulate the vertical positioning */
+    padding-left: 0.5rem;
+}
+
+/* Left controls: Rectangle 6 (130x43) */
+.control-pill-wrapper {
+    width: 130px;
+    height: 43px;
+    border-radius: 12px;
+    background-color: var(--pill-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+}
+
+/* Rectangle 7: AI Gradient Pill (39x38) */
+.control-pill-ai {
+    width: 39px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Gradient and Border Image source */
+    background: linear-gradient(180deg, rgba(77, 139, 231, 0.2) 0%, rgba(129, 67, 177, 0.2) 100%);
+    border: 1px solid;
+    border-image: linear-gradient(180deg, rgba(77, 139, 231, 0.7) 0%, rgba(129, 67, 177, 0.7) 100%) 1;
+}
+
+/* Send Button: Rectangle 9 (43x39) */
+.send-button-wrapper {
+    width: 43px;
+    height: 39px;
+    border-radius: 10px;
+    /* Send Button Gradient */
+    background: linear-gradient(180deg, #4D8BE7 0%, #8143B1 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.chat-control-icon {
+    font-size: 1.2rem;
+    opacity: 0.5; /* Default icon opacity */
+    cursor: pointer;
+    margin: 0 5px; /* Added spacing between icons */
+}
+
+/* Pills Section */
+.action-pill {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background-color: var(--pill-bg); 
+    border: none;
+    color: white;
+    margin: 5px; /* Changed margin-right to margin for better wrapping */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.action-pill:hover {
+    background-color: #3A3E3D;
+}
+
+/* Floating Controls (Language/Question) */
+.floating-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.floating-circle {
+    width: 35px; /* Ellipse 5/6 width */
+    height: 35px; /* Ellipse 5/6 height */
+    border-radius: 50%;
+    background-color: #191A1A; /* Matches the overall background for blending */
+    border: 1px solid #3C3C3C; /* Border color */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.floating-circle:hover {
+    background-color: #2A2E2D;
+}
+
+/* Media Query for Mobile Responsiveness */
+@media (max-width: 768px) {
+    #sidebar {
+        /* Hide sidebar on small screens or make it a drawer if needed */
+        display: none !important;
+    }
+    .chat-rect-container {
+        width: 100%; /* Full width on mobile */
+        max-width: 95%; 
+    }
+    .main-area-container {
+        padding-top: 2rem;
+    }
+}
