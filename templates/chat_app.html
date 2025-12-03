@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pegpo Gemini Chat</title>
+    <!-- 1. Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 2. Include Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* --- CUSTOM CSS STYLES (From custom_ui.css) --- */
+        :root {
+            --sidebar-bg: #1F2121;
+            --inactive-btn-bg: #2A2E2D;
+            --avatar-ai-bg: #6F7574;
+            --sidebar-width: 90px;
+            --sep-color: rgba(135, 135, 135, 0.25);
+            --inactive-icon-color: rgba(255, 255, 255, 0.6);
+            --active-icon-color: #FFFFFF;
+            --chat-rect-bg: #1F2121;
+            --chat-border-color: rgba(111, 117, 116, 0.4);
+            --placeholder-color: #FFFFFF;
+            --pill-bg: #2A2E2D;
+            --main-bg: #191A1A;
+            --input-height: 146px;
+            --input-padding: 20px;
+        }
+        /* Enable page scrolling (scrollbar at browser edge) */
+        html, body {
+            height: 100%;
+        }
+        body {
+            background-color: var(--main-bg) !important;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-y: auto; /* enable page-level vertical scroll */
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background-color: var(--sidebar-bg) !important;
+            border-color: #1A1A1A !important;
+            height: 100vh;
+        }
+        .sidebar-icon-wrapper {
+            width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; cursor: pointer; transition: background-color 0.2s;
+            color: var(--inactive-icon-color);
+        }
+        .sidebar-icon-wrapper:hover {
+            background-color: var(--inactive-btn-bg);
+        }
+        .avatar-ai {
+            width: 55px; height: 55px; background-color: var(--avatar-ai-bg); border-radius: 50%; display: flex; justify-content: center; align-items: center;
+        }
+        .new-btn {
+            width: 50px; height: 50px; background-color: var(--inactive-btn-bg); border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 0; border: none;
+        }
+        .nav-link-item {
+            display: flex; flex-direction: column; align-items: center; padding: 10px 0; text-decoration: none; color: var(--inactive-icon-color); font-size: 10px; font-weight: 500;
+        }
+        .nav-link-item.active .sidebar-icon-wrapper { background-color: var(--inactive-btn-bg); color: var(--active-icon-color); }
+        .nav-link-item.active { color: var(--active-icon-color); font-weight: 600; }
+        .sidebar-separator { width: 55px; height: 1px; background-color: var(--sep-color); margin: 10px auto; }
+
+        /* Main Area / Chat Input Styling */
+        .main-area {
+            min-height: 100vh;              /* allow page-level scrolling; min-height preserves layout */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: visible;              /* do not force a scrollbar inside the main area */
+        }
+        .main-area-container {
+            padding-top: 5rem;
+        }
+
+        /* Centering container */
+        #initial-center-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease-in-out;
+            z-index: 10;
+            width: 761px;
+            max-width: 95%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #initial-center-container.bottom-fixed {
+            top: unset;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .chat-rect-container {
+            width: 100%;
+            min-height: var(--input-height);
+            border-radius: 23px;
+            background-color: var(--chat-rect-bg) !important;
+            border: 1px solid var(--chat-border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            order: 1;
+        }
+
+        /* Chat content: normally flows with the page. When active-chat is set we allow internal scroll as needed */
+        #chat-content {
+            padding-top: 20px;
+            max-width: 761px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            overflow-y: visible; /* default: no inner scrollbar */
+            flex-grow: 1;
+        }
+        #chat-content.active-chat {
+            padding-bottom: calc(var(--input-height) + var(--input-padding) + 40px);
+            overflow-y: auto; /* allow internal scrolling when many messages */
+            max-height: calc(100vh - 220px); /* reasonable cap so inner scrolling works on tall histories */
+        }
+
+        .chat-input-textarea {
+            color: #FFFFFF !important;
+            font-size: 18px;
+            font-weight: 400;
+            resize: none;
+            box-shadow: none;
+            background-color: transparent !important;
+        }
+        .control-pill-wrapper {
+            width: 130px; height: 43px; border-radius: 12px; background-color: var(--pill-bg); display: flex; align-items: center; padding: 0 5px;
+        }
+        .control-pill-ai {
+            width: 39px; height: 38px; border-radius: 9px; display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(180deg, rgba(77, 139, 231, 0.2) 0%, rgba(129, 67, 177, 0.2) 100%);
+            border: 1px solid;
+            border-image: linear-gradient(180deg, rgba(77, 139, 231, 0.7) 0%, rgba(129, 67, 177, 0.7) 100%) 1;
+            font-size: 1.1rem;
+        }
+        .send-button-wrapper {
+            width: 43px; height: 39px; border-radius: 10px;
+            background: linear-gradient(180deg, #4D8BE7 0%, #8143B1 100%);
+            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: opacity 0.2s;
+        }
+        .send-button-wrapper:hover:not([disabled]) { opacity: 0.8; }
+        .send-button-wrapper[disabled] { opacity: 0.5; cursor: not-allowed; }
+        .chat-control-icon {
+            font-size: 1.2rem; opacity: 0.5; cursor: pointer; margin: 0 5px;
+        }
+
+        #action-pills {
+            margin-top: 15px;
+            opacity: 1;
+            transition: opacity 0.3s ease-out;
+            order: 2;
+        }
+        #action-pills.hidden {
+            opacity: 0;
+            pointer-events: none;
+            height: 0;
+            margin-top: 0;
+            overflow: hidden;
+        }
+        .action-pill {
+            font-size: 14px; font-weight: 500; padding: 8px 15px; border-radius: 20px; background-color: var(--pill-bg);
+            border: none; color: white; margin: 5px; cursor: pointer; transition: background-color 0.2s;
+        }
+        .action-pill:hover { background-color: #3A3E3D; }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 120px;
+            display: flex;
+            gap: 10px;
+            z-index: 9;
+        }
+        .floating-circle {
+            width: 35px; height: 35px; border-radius: 50%; background-color: #191A1A;
+            border: 1px solid #3C3C3C; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer;
+        }
+
+        /* --- CHAT BUBBLE STYLES --- */
+        .chat-bubble {
+            padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; max-width: 90%; line-height: 1.6; white-space: pre-wrap;
+        }
+        .chat-bubble.user {
+            background-color: #3A3E3D; margin-left: auto; margin-right: 0; border-bottom-right-radius: 5px;
+        }
+        .chat-bubble.ai {
+            background-color: var(--chat-rect-bg); margin-right: auto; margin-left: 0; border-bottom-left-radius: 5px; border: 1px solid var(--chat-border-color);
+        }
+        .typing-indicator span {
+            display: inline-block; width: 8px; height: 8px; background-color: var(--placeholder-color); border-radius: 50%; margin: 0 2px; animation: pulse 1s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1.0); }
+            50% { transform: scale(0.6); opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            #sidebar { display: none !important; }
+            #initial-center-container { width: 95%; }
+            #initial-center-container.bottom-fixed { width: 95%; }
+            #chat-content { max-width: 100%; padding-left: 10px; padding-right: 10px; }
+            .floating-controls { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="d-flex vh-100">
+
+    <!-- SIDEBAR (Left Column) -->
+    <aside id="sidebar" class="d-flex flex-column flex-shrink-0 border-end">
+        <div class="d-flex flex-column align-items-center mb-4 pt-3">
+            <div class="avatar-ai mb-4 fs-3">
+                <span style="font-size: 1.2rem;">Ai</span>
+            </div>
+            <button class="new-btn border-0 fs-4 text-white" id="newChatBtn" title="Start a New Chat">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+        </div>
+        <nav class="d-flex flex-column align-items-center flex-grow-1">
+            <a href="#" class="nav-link-item active">
+                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-app"></i></div>
+                <div class="mt-1">Home</div>
+            </a>
+            <div class="sidebar-separator"></div>
+            <a href="#" class="nav-link-item">
+                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-folder2"></i></div>
+                <div class="mt-1">Projects</div>
+            </a>
+            <a href="#" class="nav-link-item">
+                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-compass"></i></div>
+                <div class="mt-1">Explore</div>
+            </a>
+            <!-- Drive Link with Icon -->
+            <a href="#" class="nav-link-item">
+                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-box-seam-fill"></i></div>
+                <div class="mt-1">Drive</div>
+            </a>
+        </nav>
+        <div class="mt-auto d-flex flex-column align-items-center pb-3">
+            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-brightness-high"></i></div>
+            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-bell"></i></div>
+            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-person-fill"></i></div>
+            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-arrow-clockwise"></i></div>
+        </div>
+    </aside>
+
+    <!-- MAIN CHAT AREA (Right Column) -->
+    <main class="main-area flex-grow-1 p-4 position-relative">
+
+        <header class="mb-5 d-flex align-items-center main-area-container">
+            <h1 class="h2 me-2" style="font-weight: 600;">Pegpo</h1>
+            <span class="badge rounded-pill bg-primary" style="font-size: 14px; padding: 5px 10px; background-color: #8143B1 !important;">Pro</span>
+        </header>
+
+        <!-- CHAT HISTORY CONTAINER -->
+        <div id="chat-content">
+            <!-- Messages will be appended here -->
+        </div>
+
+        <!-- CENTERED/FIXED INPUT AND PILLS CONTAINER -->
+        <div id="initial-center-container" class="d-flex flex-column align-items-center">
+
+            <!-- INPUT SECTION (Rectangle) - Must come first for the centered layout -->
+            <section class="chat-rect-container d-flex flex-column p-4">
+
+                <div class="flex-grow-1 mb-2">
+                    <textarea
+                        id="chatInput"
+                        class="form-control bg-transparent border-0 chat-input-textarea"
+                        placeholder="Ask anything. Type @ For mentions."
+                        rows="2"
+                        style="min-height: 48px;"
+                    ></textarea>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-2">
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="control-pill-wrapper">
+                            <div class="control-pill-ai text-white">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <i class="bi bi-globe chat-control-icon text-white"></i>
+                            <i class="bi bi-magic chat-control-icon text-white"></i>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-toggle-on chat-control-icon text-white"></i>
+                        <i class="bi bi-paperclip chat-control-icon text-white"></i>
+                        <i class="bi bi-link-45deg chat-control-icon text-white"></i>
+                        <i class="bi bi-mic chat-control-icon text-white"></i>
+
+                        <button class="send-button-wrapper text-white border-0 p-0" id="sendButton" disabled>
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ACTION PILLS (Now BELOW the Rectangle) -->
+            <div id="action-pills" class="d-flex justify-content-center flex-wrap">
+                <button class="action-pill d-flex align-items-center">
+                    <i class="bi bi-lightbulb-fill me-2"></i> Think
+                </button>
+                <button class="action-pill d-flex align-items-center">
+                    <i class="bi bi-lightbulb me-2"></i> Deep Thinking
+                </button>
+                <button class="action-pill d-flex align-items-center">
+                    <i class="bi bi-book-half me-2"></i> Study Learn
+                </button>
+                <button class="action-pill d-flex align-items-center">
+                    <i class="bi bi-image me-2"></i> Create Image
+                </button>
+                <button class="action-pill d-flex align-items-center">
+                    <i class="bi bi-easel-fill me-2"></i> Canvas
+                </button>
+            </div>
+        </div>
+
+        <div class="floating-controls">
+            <div class="floating-circle text-white"><i class="bi bi-translate"></i></div>
+            <div class="floating-circle text-white"><i class="bi bi-question-lg"></i></div>
+        </div>
+    </main>
+</div>
+
+<!-- 5. Include Firebase JS SDKs -->
+<script type="module">
+    // Core Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- GLOBAL VARIABLES (Mandatory Canvas Globals) ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // UI Elements
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    const chatContent = document.getElementById('chat-content');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const centerContainer = document.getElementById('initial-center-container');
+    const actionPills = document.getElementById('action-pills');
+
+    let isProcessing = false;
+    let isChatActive = false; // Tracks if a conversation has started
+    //const modelName = 'gemini-2.5-flash-preview-09-2025';
+    //const apiKey = "";
+
+    // --- 1. FIREBASE INITIALIZATION AND AUTHENTICATION ---
+    let auth;
+    let db;
+
+    async function initializeFirebaseAndAuth() {
+        if (Object.keys(firebaseConfig).length === 0) {
+             console.error("Firebase config is missing. Cannot initialize Firebase.");
+             return;
+        }
+
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        try {
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+            console.log("Firebase Authentication successful.");
+        } catch (error) {
+            console.error("Firebase Authentication failed:", error);
+        }
+    }
+
+    // --- 2. LAYOUT MANAGEMENT ---
+    function centerInputBox() {
+        centerContainer.classList.remove('bottom-fixed');
+        actionPills.classList.remove('hidden');
+        chatContent.classList.remove('active-chat');
+        chatContent.innerHTML = '';
+        isChatActive = false;
+        // When resetting to center, scroll page to top (so input is centered correctly)
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function moveInputBoxToBottom() {
+        if (!isChatActive) {
+            centerContainer.classList.add('bottom-fixed');
+            setTimeout(() => {
+                actionPills.classList.add('hidden');
+            }, 300);
+            chatContent.classList.add('active-chat');
+            isChatActive = true;
+            // scroll page to bottom to reveal the fixed input
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 350);
+        }
+    }
+
+    // --- 3. TYPING SIMULATION FOR STREAMING EFFECT ---
+    function simulateTyping(element, text) {
+        return new Promise(resolve => {
+            const typingSpeed = 25;
+            let i = 0;
+            element.innerHTML = '';
+
+            function typeChar() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    // if inner-chat is scrollable, keep it anchored; otherwise scroll page
+                    if (chatContent.classList.contains('active-chat')) {
+                        chatContent.scrollTop = chatContent.scrollHeight;
+                    } else {
+                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+                    }
+                    i++;
+                    setTimeout(typeChar, typingSpeed);
+                } else {
+                    resolve();
+                }
+            }
+            typeChar();
+        });
+    }
+
+    // --- 4. UI RENDERING FUNCTIONS ---
+    function createMessageElement(role, text, isTyping = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `d-flex ${role === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${role}`;
+
+        if (isTyping) {
+            bubble.id = 'aiTypingIndicator';
+            bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        } else {
+            bubble.innerText = text;
+        }
+
+        chatContent.appendChild(wrapper);
+        wrapper.appendChild(bubble);
+
+        // If chat area is active (internal scroll), use its scroll; otherwise scroll the page
+        if (chatContent.classList.contains('active-chat')) {
+            chatContent.scrollTop = chatContent.scrollHeight;
+        } else {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+        }
+
+        return bubble;
+    }
+
+    // --- 5. GEMINI API INTERACTION (via Django backend) ---
+    async function fetchGeminiResponse(prompt) {
+        isProcessing = true;
+        sendButton.disabled = true;
+
+        // Move input to bottom when conversation starts
+        moveInputBoxToBottom();
+
+        // Create AI bubble with typing indicator
+        const aiBubble = createMessageElement('ai', '', true);
+
+        try {
+            const resp = await fetch("/api/chat/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: prompt })
+            });
+
+            if (!resp.ok) {
+                let errBody = {};
+                try { errBody = await resp.json(); } catch (e) { /* ignore */ }
+                const serverMsg = errBody.error || errBody.detail || resp.statusText || `Status ${resp.status}`;
+                throw new Error(`Server error: ${serverMsg}`);
+            }
+
+            const data = await resp.json();
+            const responseText = data.response || data.error || "No response from server.";
+
+            // Remove typing indicator and show text with simulated typing
+            aiBubble.removeAttribute('id');
+            aiBubble.classList.remove('typing-indicator');
+            await simulateTyping(aiBubble, responseText);
+
+        } catch (err) {
+            console.error("Chat fetch error:", err);
+
+            // Replace typing indicator with friendly error text
+            aiBubble.removeAttribute('id');
+            aiBubble.classList.remove('typing-indicator');
+            aiBubble.innerText = "Sorry — couldn't get a response. Check the console for details.";
+        } finally {
+            isProcessing = false;
+            sendButton.disabled = chatInput.value.trim() === '';
+            // ensure final scroll
+            if (chatContent.classList.contains('active-chat')) {
+                chatContent.scrollTop = chatContent.scrollHeight;
+            } else {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+            }
+        }
+    }
+
+    // --- 6. EVENT HANDLERS ---
+    async function handleUserInput() {
+        if (isProcessing) return;
+
+        const prompt = chatInput.value.trim();
+        if (prompt === "") return;
+
+        chatInput.value = '';
+        sendButton.disabled = true;
+
+        createMessageElement('user', prompt);
+
+        await fetchGeminiResponse(prompt);
+    }
+
+    // Event listeners
+    sendButton.addEventListener('click', handleUserInput);
+
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleUserInput();
+        }
+    });
+
+    chatInput.addEventListener('input', () => {
+        sendButton.disabled = isProcessing || chatInput.value.trim() === '';
+    });
+
+    // New Chat Button Handler
+    newChatBtn.addEventListener('click', () => {
+        if (!isProcessing) {
+            centerInputBox();
+            console.log("New chat started.");
+        }
+    });
+
+    // --- 7. APPLICATION STARTUP ---
+    window.onload = () => {
+        initializeFirebaseAndAuth();
+        centerInputBox();
+        console.log("Application loaded and initialized.");
+    };
+</script>
+</body>
+</html>
