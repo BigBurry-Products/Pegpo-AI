@@ -3,10 +3,9 @@ import os
 import json
 import traceback
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import StreamingHttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-# Lazy import for the Gemini SDK
 try:
     import google.generativeai as genai
     _HAS_GENAI = True
@@ -16,19 +15,17 @@ except Exception:
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 
+
 def chat_view(request):
-    """
-    Renders the chat UI template. Make sure templates/chat_app.html exists.
-    """
     return render(request, "chat_app.html")
+
+
+def sse_format(data: str) -> str:
+    return f"data: {data}\n\n"
 
 
 @csrf_exempt
 def chat_api(request):
-    """
-    API endpoint used by frontend JavaScript to get responses.
-    Expects JSON body: { "message": "..." }
-    """
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=400)
 
@@ -42,32 +39,55 @@ def chat_api(request):
         return JsonResponse({"error": "Message is empty"}, status=400)
 
     if not _HAS_GENAI:
-        return JsonResponse({"error": "google-generativeai package not installed (pip install google-generativeai)"}, status=500)
+        return JsonResponse(
+            {"error": "google-generativeai package not installed"},
+            status=500,
+        )
 
     if not API_KEY:
-        return JsonResponse({"error": "GEMINI_API_KEY not found in environment (.env not loaded or variable missing)."}, status=500)
+        return JsonResponse(
+            {"error": "GEMINI_API_KEY not found in environment"},
+            status=500,
+        )
 
-    try:
-        genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash")
-        resp = model.generate_content(user_message)
+    def event_stream():
+        try:
+            genai.configure(api_key=API_KEY)
+            model = genai.GenerativeModel("gemini-2.5-flash")
 
-        # Try to extract text from SDK response
-        reply = None
-        if hasattr(resp, "text") and resp.text:
-            reply = resp.text
-        else:
-            candidate = getattr(resp, "candidates", None)
-            if candidate and len(candidate) > 0 and getattr(candidate[0], "content", None):
-                parts = getattr(candidate[0].content, "parts", None)
-                if parts and len(parts) > 0:
-                    reply = getattr(parts[0], "text", None)
+            response = model.generate_content(
+                user_message,
+                stream=True
+            )
 
-        if reply is None:
-            reply = ""
+            for chunk in response:
+                text = None
 
-        return JsonResponse({"response": reply})
+                # ✅ Proper Gemini chunk extraction
+                if hasattr(chunk, "text") and chunk.text:
+                    text = chunk.text
+                else:
+                    candidates = getattr(chunk, "candidates", None)
+                    if candidates:
+                        content = getattr(candidates[0], "content", None)
+                        if content and content.parts:
+                            text = getattr(content.parts[0], "text", None)
 
-    except Exception as e:
-        traceback.print_exc()
-        return JsonResponse({"error": "Gemini request failed", "detail": str(e)}, status=500)
+                if text:
+                    yield sse_format(text)
+                    yield ""  # force flush
+
+        except Exception:
+            traceback.print_exc()
+            yield sse_format("[ERROR] Gemini request failed")
+
+        yield sse_format("[DONE]")
+
+    return StreamingHttpResponse(
+        event_stream(),
+        content_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )

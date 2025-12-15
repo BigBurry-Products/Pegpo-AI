@@ -442,8 +442,22 @@
     let isProcessing = false;
     let isChatActive = false;
 
+    // ===== Streaming / Stop control (Step 1) =====
+    let abortController = null;   // controls fetch cancel
+    let isStreaming = false;     // true while AI is responding
+    let stopRequested = false;   // user pressed stop
+
+
     let auth;
     let db;
+// ===== Send / Stop button UI helpers (Step 2) =====
+function setSendMode() {
+    sendButton.innerHTML = '<i class="bi bi-send-fill"></i>';
+}
+
+function setStopMode() {
+    sendButton.innerHTML = '<i class="bi bi-stop-fill"></i>';
+}
 
     async function initializeFirebaseAndAuth() {
         if (Object.keys(firebaseConfig).length === 0) {
@@ -533,6 +547,30 @@
         });
     }
 
+    // ===== ChatGPT-style typing queue =====
+let typingQueue = [];
+let isTyping = false;
+
+async function startTyping(element) {
+    if (isTyping) return;
+    isTyping = true;
+
+    while (typingQueue.length > 0 && !stopRequested) {
+        element.textContent += typingQueue.shift();
+
+        if (chatContent.classList.contains('active-chat')) {
+            chatContent.scrollTop = chatContent.scrollHeight;
+        } else {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+        }
+
+        await new Promise(r => setTimeout(r, 12)); // typing speed
+    }
+
+    isTyping = false;
+}
+
+
     // --- 4. UI RENDERING ---
     function createMessageElement(role, text, isTyping = false) {
         const wrapper = document.createElement('div');
@@ -562,71 +600,108 @@
 
     // --- 5. GEMINI API CALL (via Django backend) ---
     async function fetchGeminiResponse(prompt) {
-        isProcessing = true;
-        sendButton.disabled = true;
+        isStreaming = true;
+    setStopMode();
+    isProcessing = true;
+    sendButton.disabled = false;
 
-        moveInputBoxToBottom();
+    moveInputBoxToBottom();
 
-        const aiBubble = createMessageElement('ai', '', true);
+    const aiBubble = createMessageElement('ai', '', true);
 
-        try {
-            const resp = await fetch("/api/chat/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: prompt })
-            });
+    try {
+        const resp = await fetch("/api/chat/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: prompt }),
+    signal: abortController.signal
+    });
 
-            if (!resp.ok) {
-                let errBody = {};
-                try { errBody = await resp.json(); } catch (e) {}
-                const serverMsg =
-                    errBody.error ||
-                    errBody.detail ||
-                    resp.statusText ||
-                    `Status ${resp.status}`;
-                throw new Error(`Server error: ${serverMsg}`);
-            }
 
-            const data = await resp.json();
-            const responseText = data.response || data.error || "No response from server.";
+        if (!resp.ok) {
+            throw new Error(`Server error ${resp.status}`);
+        }
 
-            aiBubble.removeAttribute('id');
-            aiBubble.classList.remove('typing-indicator');
-            await simulateTyping(aiBubble, responseText);
+        aiBubble.removeAttribute('id');
+        aiBubble.innerHTML = ""; // start empty
 
-        } catch (err) {
-            console.error("Chat fetch error:", err);
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder("utf-8");
 
-            aiBubble.removeAttribute('id');
-            aiBubble.classList.remove('typing-indicator');
-            aiBubble.innerText = "Sorry — couldn't get a response. Please try again.";
+        let buffer = "";
 
-            if (chatContent.classList.contains('active-chat')) {
-                chatContent.scrollTop = chatContent.scrollHeight;
-            } else {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-            }
-        } finally {
-            isProcessing = false;
-            sendButton.disabled = chatInput.value.trim() === '';
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-            if (chatContent.classList.contains('active-chat')) {
-                chatContent.scrollTop = chatContent.scrollHeight;
-            } else {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop(); // keep incomplete line
+
+            for (const line of lines) {
+                if (!line.startsWith("data:")) continue;
+
+                const chunk = line.replace("data:", "").trim();
+
+                if (chunk === "[DONE]") {
+                    reader.cancel();
+                    break;
+                }
+
+                typingQueue.push(...chunk);
+                startTyping(aiBubble);
+
+
+                if (chatContent.classList.contains('active-chat')) {
+                    chatContent.scrollTop = chatContent.scrollHeight;
+                } else {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+                }
             }
         }
-    }
+
+    } catch (err) {
+        console.error("Streaming error:", err);
+        aiBubble.textContent = "Sorry — couldn't get a response.";
+    } finally {
+    isProcessing = false;
+    isStreaming = false;
+    setSendMode();
+    sendButton.disabled = chatInput.value.trim() === '';
+}
+
+
+
+}
+
 
     // --- 6. EVENT HANDLERS ---
     async function handleUserInput() {
+        // If currently streaming, treat click as STOP
+        if (isStreaming) {
+    stopRequested = true;
+
+    typingQueue.length = 0;   // 🔥 clear queued text
+    isTyping = false;         // 🔥 halt typing loop
+
+    if (abortController) {
+        abortController.abort();
+    }
+
+    setSendMode();
+    isStreaming = false;
+    return;
+}
+
+
         if (isProcessing) return;
 
         const prompt = chatInput.value.trim();
         if (prompt === "") return;
 
         chatInput.value = '';
-        sendButton.disabled = true;
+        sendButton.disabled = false;
 
         createMessageElement('user', prompt);
 
@@ -634,8 +709,14 @@
             toggleSidebar(false);
         }
 
+             stopRequested = false;
+        abortController = new AbortController();
+        isStreaming = true;
+        setStopMode();
+
         await fetchGeminiResponse(prompt);
-    }
+
+            }
 
     sendButton.addEventListener('click', handleUserInput);
 
@@ -647,8 +728,11 @@
     });
 
     chatInput.addEventListener('input', () => {
-        sendButton.disabled = isProcessing || chatInput.value.trim() === '';
-    });
+    if (!isStreaming) {
+        sendButton.disabled = chatInput.value.trim() === '';
+    }
+});
+
 
     newChatBtn.addEventListener('click', () => {
         if (!isProcessing) {
@@ -680,6 +764,7 @@
     window.onload = () => {
         initializeFirebaseAndAuth();
         centerInputBox();
+        setSendMode();
         console.log("Application loaded and initialized.");
     };
 </script>
