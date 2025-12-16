@@ -568,6 +568,15 @@ async function startTyping(element) {
     }
 
     isTyping = false;
+
+    // ✅ Typing fully finished → restore SEND
+    if (!stopRequested && typingQueue.length === 0) {
+        isStreaming = false;
+        setSendMode();
+        sendButton.disabled = false;
+
+    }
+
 }
 
 
@@ -601,13 +610,13 @@ async function startTyping(element) {
     // --- 5. GEMINI API CALL (via Django backend) ---
     async function fetchGeminiResponse(prompt) {
         isStreaming = true;
-    setStopMode();
-    isProcessing = true;
-    sendButton.disabled = false;
+        setStopMode();
+        isProcessing = true;
+        sendButton.disabled = false;
 
-    moveInputBoxToBottom();
+        moveInputBoxToBottom();
 
-    const aiBubble = createMessageElement('ai', '', true);
+        const aiBubble = createMessageElement('ai', '', true);
 
     try {
         const resp = await fetch("/api/chat/", {
@@ -666,9 +675,9 @@ async function startTyping(element) {
         aiBubble.textContent = "Sorry — couldn't get a response.";
     } finally {
     isProcessing = false;
-    isStreaming = false;
-    setSendMode();
-    sendButton.disabled = chatInput.value.trim() === '';
+    //isStreaming = false;
+    //setSendMode();
+    //sendButton.disabled = chatInput.value.trim() === '';
 }
 
 
@@ -691,6 +700,8 @@ async function startTyping(element) {
 
     setSendMode();
     isStreaming = false;
+    sendButton.disabled = chatInput.value.trim() === '';
+
     return;
 }
 
@@ -728,10 +739,12 @@ async function startTyping(element) {
     });
 
     chatInput.addEventListener('input', () => {
-    if (!isStreaming) {
-        sendButton.disabled = chatInput.value.trim() === '';
-    }
+    // 🔒 NEVER disable button while streaming (STOP must stay clickable)
+    if (isStreaming) return;
+
+    sendButton.disabled = chatInput.value.trim() === '';
 });
+
 
 
     newChatBtn.addEventListener('click', () => {
