@@ -1,785 +1,264 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pegpo Gemini Chat</title>
     <!-- 1. Include Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 2. Include Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        /* --- CUSTOM CSS STYLES --- */
-        :root {
-            --sidebar-bg: #1F2121;
-            --inactive-btn-bg: #2A2E2D;
-            --avatar-ai-bg: #6F7574;
-            --sidebar-width: 90px;
-            --sep-color: rgba(135, 135, 135, 0.25);
-            --inactive-icon-color: rgba(255, 255, 255, 0.6);
-            --active-icon-color: #FFFFFF;
-            --chat-rect-bg: #1F2121;
-            --chat-border-color: rgba(111, 117, 116, 0.4);
-            --placeholder-color: #FFFFFF;
-            --pill-bg: #2A2E2D;
-            --main-bg: #191A1A;
-            --input-height: 146px;
-            --input-padding: 20px;
-        }
 
-        /* Enable page scrolling (scrollbar at browser edge) */
-        html, body {
-            height: 100%;
-            overflow-x: hidden;
-        }
-        body {
-            background-color: var(--main-bg) !important;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            overflow-y: auto;
-        }
-
-        /* Sidebar Styling */
-        #sidebar {
-            width: var(--sidebar-width);
-            min-width: var(--sidebar-width);
-            background-color: var(--sidebar-bg) !important;
-            border-color: #1A1A1A !important;
-            height: 100vh;
-            z-index: 1030;
-            transition: transform 0.3s ease-out;
-        }
-
-        @media (max-width: 991px) {
-            #sidebar {
-                position: fixed !important;
-                transform: translateX(-100%);
-            }
-            .sidebar-open #sidebar {
-                transform: translateX(0);
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-            }
-        }
-
-        .sidebar-open:before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1020;
-            display: block;
-        }
-
-        .sidebar-icon-wrapper {
-            width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 10px; cursor: pointer; transition: background-color 0.2s;
-            color: var(--inactive-icon-color);
-        }
-        .sidebar-icon-wrapper:hover {
-            background-color: var(--inactive-btn-bg);
-        }
-        .avatar-ai {
-            width: 55px; height: 55px;
-            background-color: var(--avatar-ai-bg);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        .new-btn {
-            width: 50px; height: 50px; background-color: var(--inactive-btn-bg); border-radius: 50%; display: flex; justify-content: center; align-items: center; padding: 0; border: none;
-        }
-        .nav-link-item {
-            display: flex; flex-direction: column; align-items: center; padding: 10px 0; text-decoration: none; color: var(--inactive-icon-color); font-size: 10px; font-weight: 500;
-        }
-        .nav-link-item.active .sidebar-icon-wrapper { background-color: var(--inactive-btn-bg); color: var(--active-icon-color); }
-        .nav-link-item.active { color: var(--active-icon-color); font-weight: 600; }
-        .sidebar-separator { width: 55px; height: 1px; background-color: var(--sep-color); margin: 10px auto; }
-
-        /* Main Area / Chat Input Styling */
-        .main-area {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            overflow: visible;
-        }
-        .main-area-container {
-            padding-top: 2rem;
-            width: 100%;
-        }
-
-        /* Centering container */
-        #initial-center-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: all 0.5s ease-in-out;
-            z-index: 10;
-            width: 761px;
-            max-width: 95%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #initial-center-container.bottom-fixed {
-            top: unset;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .chat-rect-container {
-            width: 100%;
-            min-height: var(--input-height);
-            border-radius: 23px;
-            background-color: var(--chat-rect-bg) !important;
-            border: 1px solid var(--chat-border-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            order: 2; /* after logo when centered */
-        }
-
-        /* Chat content */
-        #chat-content {
-            padding-top: 20px;
-            max-width: 761px;
-            width: 100%;
-            margin-left: auto;
-            margin-right: auto;
-            overflow-y: visible;
-            flex-grow: 1;
-        }
-        #chat-content.active-chat {
-            padding-bottom: calc(var(--input-height) + var(--input-padding) + 40px);
-            overflow-y: auto;
-            max-height: calc(100vh - 220px);
-        }
-
-        .chat-input-textarea {
-            color: #FFFFFF !important;
-            font-size: 18px;
-            font-weight: 400;
-            resize: none;
-            box-shadow: none;
-            background-color: transparent !important;
-        }
-        .control-pill-wrapper {
-            width: 130px; height: 43px; border-radius: 12px; background-color: var(--pill-bg); display: flex; align-items: center; padding: 0 5px;
-        }
-        .control-pill-ai {
-            width: 39px; height: 38px; border-radius: 9px; display: flex; justify-content: center; align-items: center;
-            background: linear-gradient(180deg, rgba(77, 139, 231, 0.2) 0%, rgba(129, 67, 177, 0.2) 100%);
-            border: 1px solid;
-            border-image: linear-gradient(180deg, rgba(77, 139, 231, 0.7) 0%, rgba(129, 67, 177, 0.7) 100%) 1;
-            font-size: 1.1rem;
-        }
-        .send-button-wrapper {
-            width: 43px; height: 39px; border-radius: 10px;
-            background: linear-gradient(180deg, #4D8BE7 0%, #8143B1 100%);
-            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: opacity 0.2s;
-        }
-        .send-button-wrapper:hover:not([disabled]) { opacity: 0.8; }
-        .send-button-wrapper[disabled] { opacity: 0.5; cursor: not-allowed; }
-        .chat-control-icon {
-            font-size: 1.2rem; opacity: 0.5; cursor: pointer; margin: 0 5px;
-        }
-
-        #action-pills {
-            margin-top: 15px;
-            opacity: 1;
-            transition: opacity 0.3s ease-out;
-            order: 3;
-        }
-        #action-pills.hidden {
-            opacity: 0;
-            pointer-events: none;
-            height: 0;
-            margin-top: 0;
-            overflow: hidden;
-        }
-        .action-pill {
-            font-size: 14px; font-weight: 500; padding: 8px 15px; border-radius: 20px; background-color: var(--pill-bg);
-            border: none; color: white; margin: 5px; cursor: pointer; transition: background-color 0.2s;
-        }
-        .action-pill:hover { background-color: #3A3E3D; }
-
-        .floating-controls {
-            position: fixed;
-            bottom: 30px;
-            right: 120px;
-            display: flex;
-            gap: 10px;
-            z-index: 9;
-        }
-        .floating-circle {
-            width: 35px; height: 35px; border-radius: 50%; background-color: #191A1A;
-            border: 1px solid #3C3C3C; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer;
-        }
-
-        /* --- CHAT BUBBLE STYLES --- */
-        .chat-bubble {
-            padding: 15px 20px; border-radius: 15px; margin-bottom: 20px; max-width: 90%; line-height: 1.6; white-space: pre-wrap;
-        }
-        .chat-bubble.user {
-            background-color: #3A3E3D; margin-left: auto; margin-right: 0; border-bottom-right-radius: 5px;
-        }
-        .chat-bubble.ai {
-            background-color: var(--chat-rect-bg); margin-right: auto; margin-left: 0; border-bottom-left-radius: 5px; border: 1px solid var(--chat-border-color);
-        }
-        .typing-indicator span {
-            display: inline-block; width: 8px; height: 8px; background-color: var(--placeholder-color); border-radius: 50%; margin: 0 2px; animation: pulse 1s infinite ease-in-out;
-        }
-        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1.0); }
-            50% { transform: scale(0.6); opacity: 0.5; }
-        }
-
-        /* PEGPO LOGO */
-        .pegpo-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            font-weight: 600;
-            z-index: 20;
-            transition: all 0.5s ease-in-out;
-        }
-
-        /* Always centered above the rectangle */
-        .pegpo-logo.centered-logo {
-            position: static;
-            align-self: center;
-            justify-content: center;
-            font-size: 32px;
-            margin-bottom: 24px; /* gap above rectangle */
-        }
-
-        .pegpo-logo .logo-text {
-            letter-spacing: 0.03em;
-        }
-
-        .pro-tag {
-            font-size: 14px;
-            background-color: #8143B1;
-            padding: 3px 10px;
-            border-radius: 999px;
-        }
-
-        @media (max-width: 991px) {
-            .main-area-container {
-                padding-top: 1rem;
-            }
-            #initial-center-container {
-                width: 95%;
-            }
-            #initial-center-container.bottom-fixed {
-                width: 95%;
-            }
-            #chat-content { max-width: 100%; padding-left: 10px; padding-right: 10px; }
-            .floating-controls { display: none; }
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/chat_app.css' %}">
 </head>
+
 <body>
 
-<div class="d-flex vh-100" id="appContainer">
+    <div class="d-flex vh-100" id="appContainer">
 
-    <!-- SIDEBAR (Left Column) -->
-    <aside id="sidebar" class="d-flex flex-column flex-shrink-0 border-end">
-        <div class="d-flex flex-column align-items-center mb-4 pt-3 position-relative" style="height: 100px;">
-            <div class="sidebar-close-area" style="position: absolute; top: 0; left: 0; width: 100%; height: 60px;"></div>
-            <div class="avatar-ai mb-4">
-                Ai
+        <!-- SIDEBAR (Left Column) -->
+        <aside id="sidebar" class="d-flex flex-column flex-shrink-0 border-end">
+            <div class="d-flex flex-column align-items-center mb-4 pt-3 position-relative" style="height: 100px;">
+                <div class="sidebar-close-area" style="position: absolute; top: 0; left: 0; width: 100%; height: 60px;">
+                </div>
+                <div class="avatar-ai mb-4">
+                    Ai
+                </div>
+                <button class="new-btn border-0 fs-4 text-white" id="newChatBtn" title="Start a New Chat">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
             </div>
-            <button class="new-btn border-0 fs-4 text-white" id="newChatBtn" title="Start a New Chat">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </div>
-        <nav class="d-flex flex-column align-items-center flex-grow-1">
-            <a href="#" class="nav-link-item active">
-                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-app"></i></div>
-                <div class="mt-1">Home</div>
-            </a>
-            <div class="sidebar-separator"></div>
-            <a href="#" class="nav-link-item">
-                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-folder2"></i></div>
-                <div class="mt-1">Projects</div>
-            </a>
-            <a href="#" class="nav-link-item">
-                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-compass"></i></div>
-                <div class="mt-1">Explore</div>
-            </a>
-            <a href="#" class="nav-link-item">
-                <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-box-seam-fill"></i></div>
-                <div class="mt-1">Drive</div>
-            </a>
-        </nav>
-        <div class="mt-auto d-flex flex-column align-items-center pb-3">
-            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-brightness-high"></i></div>
-            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-bell"></i></div>
-            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-person-fill"></i></div>
-            <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-arrow-clockwise"></i></div>
-        </div>
-    </aside>
-
-    <!-- MAIN CHAT AREA (Right Column) -->
-    <main class="main-area flex-grow-1 p-4 position-relative" id="mainContentArea">
-
-        <!-- Only menu button in header -->
-        <header class="mb-5 d-flex align-items-center main-area-container">
-            <button id="menuToggle" class="btn btn-link text-white p-0 me-3 d-lg-none" style="font-size: 1.5rem;">
-                <i class="bi bi-list"></i>
-            </button>
-        </header>
-
-        <!-- CENTERED/FIXED INPUT AND PILLS CONTAINER -->
-        <div id="initial-center-container" class="d-flex flex-column align-items-center">
-
-            <!-- PEGPO LOGO (centered above rectangle) -->
-            <div id="pegpoLogo" class="pegpo-logo centered-logo">
-                <span class="logo-text">Pegpo</span>
-                <span class="pro-tag">Pro</span>
+            <nav class="d-flex flex-column align-items-center flex-grow-1">
+                <a href="#" class="nav-link-item active" id="nav-home">
+                    <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-app"></i></div>
+                    <div class="mt-1">Home</div>
+                </a>
+                <div class="sidebar-separator"></div>
+                <a href="#" class="nav-link-item" id="nav-projects">
+                    <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-folder2"></i></div>
+                    <div class="mt-1">Projects</div>
+                </a>
+                <a href="#" class="nav-link-item" id="nav-explore">
+                    <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-compass"></i></div>
+                    <div class="mt-1">Explore</div>
+                </a>
+                <a href="#" class="nav-link-item" id="nav-drive">
+                    <div class="sidebar-icon-wrapper fs-5"><i class="bi bi-box-seam-fill"></i></div>
+                    <div class="mt-1">Drive</div>
+                </a>
+            </nav>
+            <div class="mt-auto d-flex flex-column align-items-center pb-3">
+                <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-brightness-high"></i></div>
+                <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-bell"></i></div>
+                <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-person-fill"></i></div>
+                <div class="sidebar-icon-wrapper fs-5 pt-3"><i class="bi bi-arrow-clockwise"></i></div>
             </div>
+        </aside>
 
-            <!-- INPUT SECTION (Rectangle) -->
-            <section class="chat-rect-container d-flex flex-column p-4">
+        <!-- MAIN CHAT AREA (Right Column) -->
+        <main class="main-area flex-grow-1 p-4 position-relative" id="mainContentArea">
 
-                <div class="flex-grow-1 mb-2">
-                    <textarea
-                        id="chatInput"
-                        class="form-control bg-transparent border-0 chat-input-textarea"
-                        placeholder="Ask anything. Type @ For mentions."
-                        rows="2"
-                        style="min-height: 48px;"
-                    ></textarea>
+            <!-- Only menu button in header -->
+            <header class="mb-5 d-flex align-items-center main-area-container">
+                <button id="menuToggle" class="btn btn-link text-white p-0 me-3 d-lg-none" style="font-size: 1.5rem;">
+                    <i class="bi bi-list"></i>
+                </button>
+            </header>
+
+            <!-- CENTERED/FIXED INPUT AND PILLS CONTAINER -->
+            <div id="initial-center-container" class="d-flex flex-column align-items-center">
+
+                <!-- PEGPO LOGO (centered above rectangle) -->
+                <div id="pegpoLogo" class="pegpo-logo centered-logo">
+                    <span class="logo-text">Pegpo</span>
+                    <span class="pro-tag">Pro</span>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-2">
+                <!-- INPUT SECTION (Rectangle) -->
+                <section class="chat-rect-container d-flex flex-column p-4">
 
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="control-pill-wrapper">
-                            <div class="control-pill-ai text-white">
-                                <i class="bi bi-search"></i>
+                    <div class="flex-grow-1 mb-2">
+                        <textarea id="chatInput" class="form-control bg-transparent border-0 chat-input-textarea"
+                            placeholder="Ask anything. Type @ For mentions." rows="2"
+                            style="min-height: 48px;"></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="control-pill-wrapper">
+                                <div class="control-pill-ai text-white">
+                                    <i class="bi bi-search"></i>
+                                </div>
+                                <i class="bi bi-globe chat-control-icon text-white"></i>
+                                <i class="bi bi-magic chat-control-icon text-white"></i>
                             </div>
-                            <i class="bi bi-globe chat-control-icon text-white"></i>
-                            <i class="bi bi-magic chat-control-icon text-white"></i>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-toggle-on chat-control-icon text-white"></i>
+                            <i class="bi bi-paperclip chat-control-icon text-white"></i>
+                            <i class="bi bi-link-45deg chat-control-icon text-white"></i>
+                            <i class="bi bi-mic chat-control-icon text-white"></i>
+
+                            <button class="send-button-wrapper text-white border-0 p-0" id="sendButton" disabled>
+                                <i class="bi bi-send-fill"></i>
+                            </button>
                         </div>
                     </div>
+                </section>
 
-                    <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-toggle-on chat-control-icon text-white"></i>
-                        <i class="bi bi-paperclip chat-control-icon text-white"></i>
-                        <i class="bi bi-link-45deg chat-control-icon text-white"></i>
-                        <i class="bi bi-mic chat-control-icon text-white"></i>
-
-                        <button class="send-button-wrapper text-white border-0 p-0" id="sendButton" disabled>
-                            <i class="bi bi-send-fill"></i>
-                        </button>
-                    </div>
+                <!-- ACTION PILLS -->
+                <div id="action-pills" class="d-flex justify-content-center flex-wrap">
+                    <button class="action-pill d-flex align-items-center">
+                        <i class="bi bi-lightbulb-fill me-2"></i> Think
+                    </button>
+                    <button class="action-pill d-flex align-items-center">
+                        <i class="bi bi-lightbulb me-2"></i> Deep Thinking
+                    </button>
+                    <button class="action-pill d-flex align-items-center">
+                        <i class="bi bi-book-half me-2"></i> Study Learn
+                    </button>
+                    <button class="action-pill d-flex align-items-center">
+                        <i class="bi bi-image me-2"></i> Create Image
+                    </button>
+                    <button class="action-pill d-flex align-items-center">
+                        <i class="bi bi-easel-fill me-2"></i> Canvas
+                    </button>
                 </div>
-            </section>
+            </div>
 
-            <!-- ACTION PILLS -->
-            <div id="action-pills" class="d-flex justify-content-center flex-wrap">
-                <button class="action-pill d-flex align-items-center">
-                    <i class="bi bi-lightbulb-fill me-2"></i> Think
+            <!-- CHAT HISTORY CONTAINER -->
+            <div id="chat-content"></div>
+
+            <div class="floating-controls">
+                <div class="floating-circle text-white"><i class="bi bi-translate"></i></div>
+                <div class="floating-circle text-white"><i class="bi bi-question-lg"></i></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- PROJECTS SIDEBAR PANEL -->
+    <div id="projects-sidebar-panel" class="d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-4 ps-2 pe-2">
+            <div class="d-flex align-items-center gap-2 text-white">
+                <i class="bi bi-folder-plus fs-5"></i>
+                <span class="fw-semibold">New Projects</span>
+            </div>
+            <i class="bi bi-x fs-4 cursor-pointer text-white" id="closeProjectsPanel" style="cursor: pointer;"></i>
+        </div>
+
+        <!-- Project List Item (Dummy) -->
+        <div class="project-item d-flex align-items-center p-2 rounded mb-2">
+            <div class="project-icon-circle green me-3">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <span class="text-white small">Investing</span>
+        </div>
+
+        <div class="mt-auto">
+            <!-- Add Project Button -->
+            <!-- We might want this at the top or bottom, image showed header "New Projects" with icon, list items below. The + button usually is nearby. 
+                 The request said: "there is a plus icon button in the sidebar, its used to add new project"
+                 Let's put a separate button if needed or rely on the header icon? 
+                 "if we click on that [plus icon button], the create project section will came...".
+                 Wait, the image shows a header "New Projects" with a folder+ icon. Maybe THAT is the button?
+                 Or maybe there is a big "+" button in the previous sidebar?
+                 "there is a plus icon button in the sidebar" -> Referencing the main sidebar?
+                 "Projects... if we click on projects another sidebar shows... there is a plus icon button in the sidebar [which one?], its used to add new project"
+                 
+                 Looking at Image 1: Top of secondary sidebar has "Folder+" icon and "New Projects" text.
+                 It also has an "X".
+                 Maybe the "Folder+" icon IS the button?
+                 
+                 Let's assume the "Folder+" icon area or a specific button triggers it.
+                 I'll add a distinct button for clarity if needed, or make the header clickable?
+                 
+                 Actually, looking at the image again (Image 1):
+                 Left Sidebar (Main): Ai, +, Home, Projects...
+                 Next to it (Secondary): Top header "New Projects" (Folder+ icon). Below it "Investing" (Green).
+                 
+                 The user says: "there is a plus icon button in the sidebar, its used to add new project if we click on that , the create project section will came"
+                 This might refer to the `+` button in the MAIN sidebar (under `Ai` avatar).
+                 
+                 Let's assume the `+` in the main sidebar opens a "New Chat" (current behavior).
+                 And inside the "Projects" sidebar panel, there should be a way to add a project.
+                 
+                 I'll add a 'plus' button inside the panel as well for good measure or make the header icon interactive.
+                 
+                 BUT, looking closer at the provided text: "if we click on projects another sidebar shows exactly in the photo... there is a plus icon button in the sidebar... if we click on that... create project section will came"
+                 
+                 In the image "New Projects" header has a Folder icon with a small plus. That looks like a label.
+                 
+                 I will add a specific "Create Project" button inside this panel, or maybe the user meant the existing "+" on the left?
+                 The existing "+" is usually for New Chat.
+                 
+                 Let's look at the image 1 again.
+                 There is a `+` button in the main sidebar below `Ai`.
+                 
+                 If the user means *that* button adds a project, that would be a change of functionality (it usually adds a chat).
+                 However, usually "New Projects" panel allows adding projects.
+                 
+                 Let's add a `+` button in the secondary panel closely matching the "New Projects" header or just below it.
+                 Or maybe the "New Projects" header IS the button?
+                 "New Projects" implies a list of new projects? Or "Your Projects"?
+                 Image text says "New Projects".
+                 
+                 I'll stick to the text: "plus icon button in the sidebar"
+                 I'll add a '+' button in the secondary sidebar.
+            -->
+            <!-- I'll add a generic add button -->
+            <button id="addProjectBtnSidebar"
+                class="btn btn-dark w-100 mb-3 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-plus-lg"></i> Create Project
+            </button>
+        </div>
+    </div>
+
+    <!-- CREATE PROJECT MODAL OVERLAY -->
+    <div id="createProjectModalOverlay" class="modal-overlay hidden">
+        <div class="create-project-modal">
+            <h3 class="text-white mb-4 fs-4 fw-normal">Project name</h3>
+
+            <input type="text" id="newProjectName" class="form-control project-input mb-4"
+                placeholder="Copenhagen Trip">
+
+            <div class="d-flex gap-2 mb-4 flex-wrap">
+                <button class="project-pill-select active" data-color="green">
+                    <div class="circle-icon green"><i class="bi bi-currency-dollar"></i></div> Investing
                 </button>
-                <button class="action-pill d-flex align-items-center">
-                    <i class="bi bi-lightbulb me-2"></i> Deep Thinking
+                <button class="project-pill-select" data-color="blue">
+                    <div class="circle-icon blue"><i class="bi bi-mortarboard"></i></div> Homework
                 </button>
-                <button class="action-pill d-flex align-items-center">
-                    <i class="bi bi-book-half me-2"></i> Study Learn
+                <button class="project-pill-select" data-color="purple">
+                    <div class="circle-icon purple"><i class="bi bi-pen"></i></div> Writing
                 </button>
-                <button class="action-pill d-flex align-items-center">
-                    <i class="bi bi-image me-2"></i> Create Image
+                <button class="project-pill-select" data-color="red">
+                    <div class="circle-icon red"><i class="bi bi-heart"></i></div> Health
                 </button>
-                <button class="action-pill d-flex align-items-center">
-                    <i class="bi bi-easel-fill me-2"></i> Canvas
+                <button class="project-pill-select" data-color="orange">
+                    <div class="circle-icon orange"><i class="bi bi-airplane"></i></div> Travel
+                </button>
+            </div>
+
+            <div class="project-info-box p-3 mb-4">
+                Projects keep chats, files and custom instruction in one place. use them for ongoing work, or just to
+                keep things tidy
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button id="createProjectConfirmBtn" class="btn btn-create-project">
+                    <i class="bi bi-plus-lg me-1"></i> Create project
                 </button>
             </div>
         </div>
+    </div>
 
-        <!-- CHAT HISTORY CONTAINER -->
-        <div id="chat-content"></div>
-
-        <div class="floating-controls">
-            <div class="floating-circle text-white"><i class="bi bi-translate"></i></div>
-            <div class="floating-circle text-white"><i class="bi bi-question-lg"></i></div>
-        </div>
-    </main>
-</div>
-
-<!-- 5. Include Firebase JS SDKs -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-    const appContainer = document.getElementById('appContainer');
-    const chatInput = document.getElementById('chatInput');
-    const sendButton = document.getElementById('sendButton');
-    const chatContent = document.getElementById('chat-content');
-    const newChatBtn = document.getElementById('newChatBtn');
-    const centerContainer = document.getElementById('initial-center-container');
-    const actionPills = document.getElementById('action-pills');
-    const menuToggle = document.getElementById('menuToggle');
-    const pegpoLogo = document.getElementById('pegpoLogo');
-
-    let isProcessing = false;
-    let isChatActive = false;
-
-    // ===== Streaming / Stop control (Step 1) =====
-    let abortController = null;   // controls fetch cancel
-    let isStreaming = false;     // true while AI is responding
-    let stopRequested = false;   // user pressed stop
-
-
-    let auth;
-    let db;
-// ===== Send / Stop button UI helpers (Step 2) =====
-function setSendMode() {
-    sendButton.innerHTML = '<i class="bi bi-send-fill"></i>';
-}
-
-function setStopMode() {
-    sendButton.innerHTML = '<i class="bi bi-stop-fill"></i>';
-}
-
-    async function initializeFirebaseAndAuth() {
-        if (Object.keys(firebaseConfig).length === 0) {
-             console.error("Firebase config is missing. Cannot initialize Firebase.");
-             return;
-        }
-
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-
-        try {
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
-                await signInAnonymously(auth);
-            }
-            console.log("Firebase Authentication successful.");
-        } catch (error) {
-            console.error("Firebase Authentication failed:", error);
-        }
-    }
-
-    // --- 2. LAYOUT MANAGEMENT ---
-    function centerInputBox() {
-        centerContainer.classList.remove('bottom-fixed');
-        actionPills.classList.remove('hidden');
-        chatContent.classList.remove('active-chat');
-        chatContent.innerHTML = '';
-        isChatActive = false;
-
-        // Ensure logo is centered
-        pegpoLogo.classList.add('centered-logo');
-
-        window.scrollTo({ top: 0, behavior: 'instant' });
-    }
-
-    function moveInputBoxToBottom() {
-        if (!isChatActive) {
-            centerContainer.classList.add('bottom-fixed');
-            setTimeout(() => {
-                actionPills.classList.add('hidden');
-            }, 300);
-            chatContent.classList.add('active-chat');
-            isChatActive = true;
-
-            // Logo stays centered; no class change
-
-            setTimeout(() => {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }, 350);
-        }
-    }
-
-    function toggleSidebar(shouldOpen) {
-        if (shouldOpen === true) {
-            appContainer.classList.add('sidebar-open');
-        } else if (shouldOpen === false) {
-            appContainer.classList.remove('sidebar-open');
-        } else {
-            appContainer.classList.toggle('sidebar-open');
-        }
-    }
-
-    // --- 3. TYPING SIMULATION ---
-    function simulateTyping(element, text) {
-        return new Promise(resolve => {
-            const typingSpeed = 25;
-            let i = 0;
-            element.innerHTML = '';
-
-            function typeChar() {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    if (chatContent.classList.contains('active-chat')) {
-                        chatContent.scrollTop = chatContent.scrollHeight;
-                    } else {
-                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-                    }
-                    i++;
-                    setTimeout(typeChar, typingSpeed);
-                } else {
-                    resolve();
-                }
-            }
-            typeChar();
-        });
-    }
-
-    // ===== ChatGPT-style typing queue =====
-let typingQueue = [];
-let isTyping = false;
-
-async function startTyping(element) {
-    if (isTyping) return;
-    isTyping = true;
-
-    while (typingQueue.length > 0 && !stopRequested) {
-        element.textContent += typingQueue.shift();
-
-        if (chatContent.classList.contains('active-chat')) {
-            chatContent.scrollTop = chatContent.scrollHeight;
-        } else {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-        }
-
-        await new Promise(r => setTimeout(r, 12)); // typing speed
-    }
-
-    isTyping = false;
-
-    // ✅ Typing fully finished → restore SEND
-    if (!stopRequested && typingQueue.length === 0) {
-        isStreaming = false;
-        setSendMode();
-        sendButton.disabled = false;
-
-    }
-
-}
-
-
-    // --- 4. UI RENDERING ---
-    function createMessageElement(role, text, isTyping = false) {
-        const wrapper = document.createElement('div');
-        wrapper.className = `d-flex ${role === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
-
-        const bubble = document.createElement('div');
-        bubble.className = `chat-bubble ${role}`;
-
-        if (isTyping) {
-            bubble.id = 'aiTypingIndicator';
-            bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-        } else {
-            bubble.innerText = text;
-        }
-
-        chatContent.appendChild(wrapper);
-        wrapper.appendChild(bubble);
-
-        if (chatContent.classList.contains('active-chat')) {
-            chatContent.scrollTop = chatContent.scrollHeight;
-        } else {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-        }
-
-        return bubble;
-    }
-
-    // --- 5. GEMINI API CALL (via Django backend) ---
-    async function fetchGeminiResponse(prompt) {
-        isStreaming = true;
-        setStopMode();
-        isProcessing = true;
-        sendButton.disabled = false;
-
-        moveInputBoxToBottom();
-
-        const aiBubble = createMessageElement('ai', '', true);
-
-    try {
-        const resp = await fetch("/api/chat/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: prompt }),
-    signal: abortController.signal
-    });
-
-
-        if (!resp.ok) {
-            throw new Error(`Server error ${resp.status}`);
-        }
-
-        aiBubble.removeAttribute('id');
-        aiBubble.innerHTML = ""; // start empty
-
-        const reader = resp.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-
-        let buffer = "";
-
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-
-            const lines = buffer.split("\n");
-            buffer = lines.pop(); // keep incomplete line
-
-            for (const line of lines) {
-                if (!line.startsWith("data:")) continue;
-
-                const chunk = line.replace("data:", "").trim();
-
-                if (chunk === "[DONE]") {
-                    reader.cancel();
-                    break;
-                }
-
-                typingQueue.push(...chunk);
-                startTyping(aiBubble);
-
-
-                if (chatContent.classList.contains('active-chat')) {
-                    chatContent.scrollTop = chatContent.scrollHeight;
-                } else {
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
-                }
-            }
-        }
-
-    } catch (err) {
-        console.error("Streaming error:", err);
-        aiBubble.textContent = "Sorry — couldn't get a response.";
-    } finally {
-    isProcessing = false;
-    //isStreaming = false;
-    //setSendMode();
-    //sendButton.disabled = chatInput.value.trim() === '';
-}
-
-
-
-}
-
-
-    // --- 6. EVENT HANDLERS ---
-    async function handleUserInput() {
-        // If currently streaming, treat click as STOP
-        if (isStreaming) {
-    stopRequested = true;
-
-    typingQueue.length = 0;   // 🔥 clear queued text
-    isTyping = false;         // 🔥 halt typing loop
-
-    if (abortController) {
-        abortController.abort();
-    }
-
-    setSendMode();
-    isStreaming = false;
-    sendButton.disabled = chatInput.value.trim() === '';
-
-    return;
-}
-
-
-        if (isProcessing) return;
-
-        const prompt = chatInput.value.trim();
-        if (prompt === "") return;
-
-        chatInput.value = '';
-        sendButton.disabled = false;
-
-        createMessageElement('user', prompt);
-
-        if (appContainer.classList.contains('sidebar-open')) {
-            toggleSidebar(false);
-        }
-
-             stopRequested = false;
-        abortController = new AbortController();
-        isStreaming = true;
-        setStopMode();
-
-        await fetchGeminiResponse(prompt);
-
-            }
-
-    sendButton.addEventListener('click', handleUserInput);
-
-    chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleUserInput();
-        }
-    });
-
-    chatInput.addEventListener('input', () => {
-    // 🔒 NEVER disable button while streaming (STOP must stay clickable)
-    if (isStreaming) return;
-
-    sendButton.disabled = chatInput.value.trim() === '';
-});
-
-
-
-    newChatBtn.addEventListener('click', () => {
-        if (!isProcessing) {
-            centerInputBox();
-            toggleSidebar(false);
-            console.log("New chat started.");
-        }
-    });
-
-    menuToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleSidebar(true);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (window.innerWidth < 992 && appContainer.classList.contains('sidebar-open')) {
-            const sidebar = document.getElementById('sidebar');
-            const menuBtn = document.getElementById('menuToggle');
-
-            const isClickInsideSidebar = sidebar.contains(e.target);
-            const isClickOnToggle = menuBtn.contains(e.target);
-
-            if (!isClickInsideSidebar && !isClickOnToggle) {
-                toggleSidebar(false);
-            }
-        }
-    });
-
-    window.onload = () => {
-        initializeFirebaseAndAuth();
-        centerInputBox();
-        setSendMode();
-        console.log("Application loaded and initialized.");
-    };
-</script>
+    <!-- 5. Include Firebase JS SDKs -->
+    <script type="module" src="{% static 'js/chat_app.js' %}"></script>
 </body>
+
 </html>

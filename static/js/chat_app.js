@@ -1,0 +1,456 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+const appContainer = document.getElementById('appContainer');
+const chatInput = document.getElementById('chatInput');
+const sendButton = document.getElementById('sendButton');
+const chatContent = document.getElementById('chat-content');
+const newChatBtn = document.getElementById('newChatBtn');
+const centerContainer = document.getElementById('initial-center-container');
+const actionPills = document.getElementById('action-pills');
+const menuToggle = document.getElementById('menuToggle');
+const pegpoLogo = document.getElementById('pegpoLogo');
+
+let isProcessing = false;
+let isChatActive = false;
+
+// ===== Streaming / Stop control (Step 1) =====
+let abortController = null;   // controls fetch cancel
+let isStreaming = false;     // true while AI is responding
+let stopRequested = false;   // user pressed stop
+
+
+let auth;
+let db;
+// ===== Send / Stop button UI helpers (Step 2) =====
+function setSendMode() {
+    sendButton.innerHTML = '<i class="bi bi-send-fill"></i>';
+}
+
+function setStopMode() {
+    sendButton.innerHTML = '<i class="bi bi-stop-fill"></i>';
+}
+
+async function initializeFirebaseAndAuth() {
+    if (Object.keys(firebaseConfig).length === 0) {
+        console.error("Firebase config is missing. Cannot initialize Firebase.");
+        return;
+    }
+
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+
+    try {
+        if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+        } else {
+            await signInAnonymously(auth);
+        }
+        console.log("Firebase Authentication successful.");
+    } catch (error) {
+        console.error("Firebase Authentication failed:", error);
+    }
+}
+
+// --- 2. LAYOUT MANAGEMENT ---
+function centerInputBox() {
+    centerContainer.classList.remove('bottom-fixed');
+    actionPills.classList.remove('hidden');
+    chatContent.classList.remove('active-chat');
+    chatContent.innerHTML = '';
+    isChatActive = false;
+
+    // Ensure logo is centered
+    pegpoLogo.classList.add('centered-logo');
+
+    window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function moveInputBoxToBottom() {
+    if (!isChatActive) {
+        centerContainer.classList.add('bottom-fixed');
+        setTimeout(() => {
+            actionPills.classList.add('hidden');
+        }, 300);
+        chatContent.classList.add('active-chat');
+        isChatActive = true;
+
+        // Logo stays centered; no class change
+
+        setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 350);
+    }
+}
+
+function toggleSidebar(shouldOpen) {
+    if (shouldOpen === true) {
+        appContainer.classList.add('sidebar-open');
+    } else if (shouldOpen === false) {
+        appContainer.classList.remove('sidebar-open');
+    } else {
+        appContainer.classList.toggle('sidebar-open');
+    }
+}
+
+// --- 3. TYPING SIMULATION ---
+function simulateTyping(element, text) {
+    return new Promise(resolve => {
+        const typingSpeed = 25;
+        let i = 0;
+        element.innerHTML = '';
+
+        function typeChar() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                if (chatContent.classList.contains('active-chat')) {
+                    chatContent.scrollTop = chatContent.scrollHeight;
+                } else {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+                }
+                i++;
+                setTimeout(typeChar, typingSpeed);
+            } else {
+                resolve();
+            }
+        }
+        typeChar();
+    });
+}
+
+// ===== ChatGPT-style typing queue =====
+let typingQueue = [];
+let isTyping = false;
+
+async function startTyping(element) {
+    if (isTyping) return;
+    isTyping = true;
+
+    while (typingQueue.length > 0 && !stopRequested) {
+        element.textContent += typingQueue.shift();
+
+        if (chatContent.classList.contains('active-chat')) {
+            chatContent.scrollTop = chatContent.scrollHeight;
+        } else {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+        }
+
+        await new Promise(r => setTimeout(r, 12)); // typing speed
+    }
+
+    isTyping = false;
+
+    // ✅ Typing fully finished → restore SEND
+    if (!stopRequested && typingQueue.length === 0) {
+        isStreaming = false;
+        setSendMode();
+        sendButton.disabled = false;
+
+    }
+
+}
+
+
+// --- 4. UI RENDERING ---
+function createMessageElement(role, text, isTyping = false) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `d-flex ${role === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+
+    if (isTyping) {
+        bubble.id = 'aiTypingIndicator';
+        bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+    } else {
+        bubble.innerText = text;
+    }
+
+    chatContent.appendChild(wrapper);
+    wrapper.appendChild(bubble);
+
+    if (chatContent.classList.contains('active-chat')) {
+        chatContent.scrollTop = chatContent.scrollHeight;
+    } else {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+    }
+
+    return bubble;
+}
+
+// --- 5. GEMINI API CALL (via Django backend) ---
+async function fetchGeminiResponse(prompt) {
+    isStreaming = true;
+    setStopMode();
+    isProcessing = true;
+    sendButton.disabled = false;
+
+    moveInputBoxToBottom();
+
+    const aiBubble = createMessageElement('ai', '', true);
+
+    try {
+        const resp = await fetch("/api/chat/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: prompt }),
+            signal: abortController.signal
+        });
+
+
+        if (!resp.ok) {
+            throw new Error(`Server error ${resp.status}`);
+        }
+
+        aiBubble.removeAttribute('id');
+        aiBubble.innerHTML = ""; // start empty
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        let buffer = "";
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop(); // keep incomplete line
+
+            for (const line of lines) {
+                if (!line.startsWith("data:")) continue;
+
+                const chunk = line.replace("data:", "").trim();
+
+                if (chunk === "[DONE]") {
+                    reader.cancel();
+                    break;
+                }
+
+                typingQueue.push(...chunk);
+                startTyping(aiBubble);
+
+
+                if (chatContent.classList.contains('active-chat')) {
+                    chatContent.scrollTop = chatContent.scrollHeight;
+                } else {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+                }
+            }
+        }
+
+    } catch (err) {
+        console.error("Streaming error:", err);
+        aiBubble.textContent = "Sorry — couldn't get a response.";
+    } finally {
+        isProcessing = false;
+        //isStreaming = false;
+        //setSendMode();
+        //sendButton.disabled = chatInput.value.trim() === '';
+    }
+
+
+
+}
+
+
+// --- 6. EVENT HANDLERS ---
+async function handleUserInput() {
+    // If currently streaming, treat click as STOP
+    if (isStreaming) {
+        stopRequested = true;
+
+        typingQueue.length = 0;   // 🔥 clear queued text
+        isTyping = false;         // 🔥 halt typing loop
+
+        if (abortController) {
+            abortController.abort();
+        }
+
+        setSendMode();
+        isStreaming = false;
+        sendButton.disabled = chatInput.value.trim() === '';
+
+        return;
+    }
+
+
+    if (isProcessing) return;
+
+    const prompt = chatInput.value.trim();
+    if (prompt === "") return;
+
+    chatInput.value = '';
+    sendButton.disabled = false;
+
+    createMessageElement('user', prompt);
+
+    if (appContainer.classList.contains('sidebar-open')) {
+        toggleSidebar(false);
+    }
+
+    stopRequested = false;
+    abortController = new AbortController();
+    isStreaming = true;
+    setStopMode();
+
+    await fetchGeminiResponse(prompt);
+
+}
+
+sendButton.addEventListener('click', handleUserInput);
+
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleUserInput();
+    }
+});
+
+chatInput.addEventListener('input', () => {
+    // 🔒 NEVER disable button while streaming (STOP must stay clickable)
+    if (isStreaming) return;
+
+    sendButton.disabled = chatInput.value.trim() === '';
+});
+
+
+
+newChatBtn.addEventListener('click', () => {
+    if (!isProcessing) {
+        centerInputBox();
+        toggleSidebar(false);
+        console.log("New chat started.");
+    }
+});
+
+menuToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSidebar(true);
+});
+
+document.addEventListener('click', (e) => {
+    if (window.innerWidth < 992 && appContainer.classList.contains('sidebar-open')) {
+        const sidebar = document.getElementById('sidebar');
+        const menuBtn = document.getElementById('menuToggle');
+
+        const isClickInsideSidebar = sidebar.contains(e.target);
+        const isClickOnToggle = menuBtn.contains(e.target);
+
+        if (!isClickInsideSidebar && !isClickOnToggle) {
+            toggleSidebar(false);
+        }
+    }
+});
+
+window.onload = () => {
+    initializeFirebaseAndAuth();
+    centerInputBox();
+    setSendMode();
+    console.log("Application loaded and initialized.");
+};
+
+// --- 7. NEW PROJECTS UI LOGIC ---
+const navProjects = document.getElementById('nav-projects');
+const projectsPanel = document.getElementById('projects-sidebar-panel');
+const closeProjectsPanelBtn = document.getElementById('closeProjectsPanel');
+const addProjectBtnSidebar = document.getElementById('addProjectBtnSidebar');
+const createProjectModalOverlay = document.getElementById('createProjectModalOverlay');
+const createProjectConfirmBtn = document.getElementById('createProjectConfirmBtn');
+const projectPillSelects = document.querySelectorAll('.project-pill-select');
+const newProjectNameInput = document.getElementById('newProjectName');
+
+if (navProjects && projectsPanel) {
+    navProjects.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Toggle active state on panel
+        projectsPanel.classList.toggle('active');
+
+        // Optionally highlight the nav item
+        document.querySelectorAll('.nav-link-item').forEach(el => el.classList.remove('active'));
+        navProjects.classList.add('active');
+    });
+
+    closeProjectsPanelBtn.addEventListener('click', () => {
+        projectsPanel.classList.remove('active');
+    });
+}
+
+function closeCreateProjectModal() {
+    createProjectModalOverlay.classList.remove('active');
+    setTimeout(() => {
+        createProjectModalOverlay.classList.add('hidden');
+    }, 300);
+}
+
+if (addProjectBtnSidebar && createProjectModalOverlay) {
+    // Show Create Project Modal
+    addProjectBtnSidebar.addEventListener('click', () => {
+        createProjectModalOverlay.classList.remove('hidden');
+        // slight delay to allow display:block to apply before opacity transition
+        setTimeout(() => {
+            createProjectModalOverlay.classList.add('active');
+        }, 10);
+        if (newProjectNameInput) newProjectNameInput.focus();
+    });
+
+    // Close Modal on Overlay Click
+    createProjectModalOverlay.addEventListener('click', (e) => {
+        if (e.target === createProjectModalOverlay) {
+            closeCreateProjectModal();
+        }
+    });
+
+    // Handle Pill Selection
+    projectPillSelects.forEach(pill => {
+        pill.addEventListener('click', () => {
+            projectPillSelects.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+        });
+    });
+
+    // Confirm Create Project
+    if (createProjectConfirmBtn) {
+        createProjectConfirmBtn.addEventListener('click', () => {
+            const name = newProjectNameInput.value.trim();
+            if (!name) return; // Validation
+
+            const activePill = document.querySelector('.project-pill-select.active');
+            const color = activePill ? activePill.getAttribute('data-color') : 'green';
+            const iconEl = activePill ? activePill.querySelector('i') : null;
+            const iconClass = iconEl ? iconEl.className : 'bi bi-folder';
+
+            // Create new project item in sidebar (Dummy implementation)
+            const newItem = document.createElement('div');
+            newItem.className = 'project-item d-flex align-items-center p-2 rounded mb-2';
+            newItem.style.cursor = 'pointer';
+
+            // Map colors to CSS classes if needed, or use inline styles/classes defined in CSS
+            // In CSS I defined .project-icon-circle.green, etc. I need to make sure I have all colors.
+            // I only added green in CSS example, I should ensure others exist or default to green.
+
+            newItem.innerHTML = `
+                <div class="project-icon-circle ${color} me-3">
+                    <i class="${iconClass}"></i>
+                </div>
+                <span class="text-white small">${name}</span>
+            `;
+
+            // Insert before the LAST div (which is the button container)
+            const lastChild = projectsPanel.lastElementChild;
+            projectsPanel.insertBefore(newItem, lastChild);
+
+            // Clear input and close
+            newProjectNameInput.value = '';
+            closeCreateProjectModal();
+        });
+    }
+}
