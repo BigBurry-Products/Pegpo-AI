@@ -337,19 +337,7 @@ menuToggle.addEventListener('click', (e) => {
     toggleSidebar(true);
 });
 
-document.addEventListener('click', (e) => {
-    if (window.innerWidth < 992 && appContainer.classList.contains('sidebar-open')) {
-        const sidebar = document.getElementById('sidebar');
-        const menuBtn = document.getElementById('menuToggle');
-
-        const isClickInsideSidebar = sidebar.contains(e.target);
-        const isClickOnToggle = menuBtn.contains(e.target);
-
-        if (!isClickInsideSidebar && !isClickOnToggle) {
-            toggleSidebar(false);
-        }
-    }
-});
+// REMOVED old document click listener to avoid duplicates. It's now handled below.
 
 window.onload = () => {
     initializeFirebaseAndAuth();
@@ -358,7 +346,7 @@ window.onload = () => {
     console.log("Application loaded and initialized.");
 };
 
-// --- 7. NEW PROJECTS UI LOGIC ---
+// --- 7. NEW PROJECTS UI LOGIC (Modified to handle Explore Panel too) ---
 const navProjects = document.getElementById('nav-projects');
 const projectsPanel = document.getElementById('projects-sidebar-panel');
 const closeProjectsPanelBtn = document.getElementById('closeProjectsPanel');
@@ -368,21 +356,83 @@ const createProjectConfirmBtn = document.getElementById('createProjectConfirmBtn
 const projectPillSelects = document.querySelectorAll('.project-pill-select');
 const newProjectNameInput = document.getElementById('newProjectName');
 
+// Explore Elements
+const navExplore = document.getElementById('nav-explore');
+const explorePanel = document.getElementById('explore-sidebar-panel');
+
+function closeAllPanels() {
+    if (projectsPanel) projectsPanel.classList.remove('active');
+    if (explorePanel) explorePanel.classList.remove('active');
+    document.querySelectorAll('.nav-link-item').forEach(el => el.classList.remove('active'));
+}
+
 if (navProjects && projectsPanel) {
     navProjects.addEventListener('click', (e) => {
         e.preventDefault();
-        // Toggle active state on panel
-        projectsPanel.classList.toggle('active');
 
-        // Optionally highlight the nav item
-        document.querySelectorAll('.nav-link-item').forEach(el => el.classList.remove('active'));
-        navProjects.classList.add('active');
+        const wasActive = projectsPanel.classList.contains('active');
+        closeAllPanels();
+
+        if (!wasActive) {
+            projectsPanel.classList.add('active');
+            navProjects.classList.add('active');
+        }
     });
 
     closeProjectsPanelBtn.addEventListener('click', () => {
         projectsPanel.classList.remove('active');
+        navProjects.classList.remove('active');
     });
 }
+
+if (navExplore && explorePanel) {
+    navExplore.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const wasActive = explorePanel.classList.contains('active');
+        closeAllPanels();
+
+        if (!wasActive) {
+            explorePanel.classList.add('active');
+            navExplore.classList.add('active');
+        }
+    });
+}
+
+// Close panels if clicking outside logic
+// Close panels if clicking outside logic (Includes Main Sidebar for Mobile)
+document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menuToggle');
+
+    // --- 1. Handle Main Sidebar (Mobile) ---
+    if (window.innerWidth < 992 && appContainer.classList.contains('sidebar-open')) {
+        const isClickInsideSidebar = sidebar.contains(e.target);
+        const isClickOnToggle = menuBtn && menuBtn.contains(e.target);
+
+        if (!isClickInsideSidebar && !isClickOnToggle) {
+            toggleSidebar(false);
+        }
+    }
+
+    // --- 2. Handle Projects / Explore Panels ---
+    const isInsideSidebar = sidebar.contains(e.target);
+    const isInsideProjects = projectsPanel && projectsPanel.contains(e.target);
+    const isInsideExplore = explorePanel && explorePanel.contains(e.target);
+    const isModal = createProjectModalOverlay && createProjectModalOverlay.contains(e.target) && createProjectModalOverlay.classList.contains('active');
+
+    // If modal is active, don't close panels (modal overlay handles its own close)
+    if (isModal) return;
+
+    if (!isInsideSidebar && !isInsideProjects && !isInsideExplore) {
+        if (projectsPanel && projectsPanel.classList.contains('active')) {
+            closeAllPanels();
+        }
+        if (explorePanel && explorePanel.classList.contains('active')) {
+            closeAllPanels();
+        }
+    }
+});
 
 function closeCreateProjectModal() {
     createProjectModalOverlay.classList.remove('active');
@@ -432,10 +482,6 @@ if (addProjectBtnSidebar && createProjectModalOverlay) {
             const newItem = document.createElement('div');
             newItem.className = 'project-item d-flex align-items-center p-2 rounded mb-2';
             newItem.style.cursor = 'pointer';
-
-            // Map colors to CSS classes if needed, or use inline styles/classes defined in CSS
-            // In CSS I defined .project-icon-circle.green, etc. I need to make sure I have all colors.
-            // I only added green in CSS example, I should ensure others exist or default to green.
 
             newItem.innerHTML = `
                 <div class="project-icon-circle ${color} me-3">

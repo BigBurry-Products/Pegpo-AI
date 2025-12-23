@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/chat_app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/chat_app.css' %}?v=3">
 </head>
 
 <body>
@@ -141,6 +141,89 @@
         </main>
     </div>
 
+    <!-- EXPLORE SIDEBAR PANEL -->
+    <div id="explore-sidebar-panel" class="d-flex flex-column">
+        <!-- Close Button (optional, though design usually implies click-outside or toggle) -->
+        <!-- Design shows it just appearing. I'll add a close button for consistency if needed, 
+             or stick to purely toggle behavior. The Projects panel has one, so I'll add one here too but keep it subtle 
+             or just rely on the layout. Image 1 shows the projects panel has an X. Image 0 doesn't strictly show the top right of explore panel.
+             I'll add a header for "Custom Super Agent" but the X might be good for UX.
+        -->
+
+        <div class="p-3">
+            <h6 class="text-white mb-3 small fw-bold">Custom Super Agent</h6>
+            <div class="agent-grid-item d-flex flex-column align-items-center justify-content-center mb-4">
+                <div class="agent-icon-wrapper mb-2 custom-plus">
+                    <i class="bi bi-grid-fill"></i>
+                    <i class="bi bi-plus-lg small-plus-overlay"></i>
+                </div>
+                <span class="agent-label">Custom</span>
+            </div>
+
+            <h6 class="text-white mb-3 small fw-bold">Agents</h6>
+            <div class="agents-grid">
+                <!-- Row 1 -->
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-person-circle"></i></div>
+                    <span class="agent-label">Super Agent</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-easel"></i></div>
+                    <span class="agent-label">AI Slides</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-table"></i></div>
+                    <span class="agent-label">AI Sheets</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-file-earmark-text"></i></div>
+                    <span class="agent-label">AI Docs</span>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-code-slash"></i></div>
+                    <span class="agent-label">AI Develop..</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-pen"></i></div>
+                    <span class="agent-label">AI Designer</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-image"></i></div>
+                    <span class="agent-label">Photo Generate</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-camera-video"></i></div>
+                    <span class="agent-label">Video Gen...</span>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-camera"></i></div>
+                    <span class="agent-label">AI Cam</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper">
+                        <div class="ai-text-icon">AI</div>
+                    </div>
+                    <span class="agent-label">Custom</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper"><i class="bi bi-lightbulb"></i></div>
+                    <span class="agent-label">Custom</span>
+                </div>
+                <div class="agent-grid-item">
+                    <div class="agent-icon-wrapper custom-plus">
+                        <i class="bi bi-grid-fill"></i>
+                        <i class="bi bi-plus-lg small-plus-overlay"></i>
+                    </div>
+                    <span class="agent-label">Custom</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- PROJECTS SIDEBAR PANEL -->
     <div id="projects-sidebar-panel" class="d-flex flex-column">
         <div class="d-flex justify-content-between align-items-center mb-4 ps-2 pe-2">
@@ -151,13 +234,7 @@
             <i class="bi bi-x fs-4 cursor-pointer text-white" id="closeProjectsPanel" style="cursor: pointer;"></i>
         </div>
 
-        <!-- Project List Item (Dummy) -->
-        <div class="project-item d-flex align-items-center p-2 rounded mb-2">
-            <div class="project-icon-circle green me-3">
-                <i class="bi bi-currency-dollar"></i>
-            </div>
-            <span class="text-white small">Investing</span>
-        </div>
+
 
         <div class="mt-auto">
             <!-- Add Project Button -->
@@ -258,7 +335,7 @@
     </div>
 
     <!-- 5. Include Firebase JS SDKs -->
-    <script type="module" src="{% static 'js/chat_app.js' %}"></script>
+    <script type="module" src="{% static 'js/chat_app.js' %}?v=2"></script>
 </body>
 
 </html>
