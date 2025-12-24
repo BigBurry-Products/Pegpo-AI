@@ -2,9 +2,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const appId = window.__app_id || 'default-app-id';
+const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
+const initialAuthToken = window.__initial_auth_token || null;
 
 const appContainer = document.getElementById('appContainer');
 const chatInput = document.getElementById('chatInput');

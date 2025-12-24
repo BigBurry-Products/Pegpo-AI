@@ -812,6 +812,7 @@ body {
 .agent-icon-wrapper i,
 .ai-text-icon {
     background: linear-gradient(135deg, #4D8BE7, #8143B1);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 2px 4px rgba(77, 139, 231, 0.2));
@@ -848,6 +849,7 @@ body {
     right: 8px;
     font-size: 10px !important;
     background: linear-gradient(135deg, #4D8BE7, #8143B1) !important;
+    background-clip: text !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-color: transparent !important;
@@ -881,10 +883,12 @@ body {
     }
 
     /* Arrow adjustment if needed (keep it pointing to sidebar) */
+    /* 
     #explore-sidebar-panel::before,
     #explore-sidebar-panel::after {
-        /* Ensure arrow stays vertically centered or aligned */
-    }
+         Ensure arrow stays vertically centered or aligned 
+    } 
+    */
 }
 
 @media (max-width: 576px) {
