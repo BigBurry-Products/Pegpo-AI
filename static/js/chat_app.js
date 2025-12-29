@@ -14,6 +14,7 @@ const newChatBtn = document.getElementById('newChatBtn');
 const centerContainer = document.getElementById('initial-center-container');
 const actionPills = document.getElementById('action-pills');
 const menuToggle = document.getElementById('menuToggle');
+const mainContentArea = document.getElementById('mainContentArea');
 const pegpoLogo = document.getElementById('pegpoLogo');
 
 let isProcessing = false;
@@ -66,8 +67,10 @@ function centerInputBox() {
     chatContent.innerHTML = '';
     isChatActive = false;
 
-    // Ensure logo is centered
+    // Move logo back to center container and ensure class is centered
+    centerContainer.prepend(pegpoLogo);
     pegpoLogo.classList.add('centered-logo');
+    pegpoLogo.classList.remove('top-left-logo');
 
     window.scrollTo({ top: 0, behavior: 'instant' });
 }
@@ -81,7 +84,10 @@ function moveInputBoxToBottom() {
         chatContent.classList.add('active-chat');
         isChatActive = true;
 
-        // Logo stays centered; no class change
+        // Move logo DOM element to main area and switch class
+        mainContentArea.prepend(pegpoLogo);
+        pegpoLogo.classList.remove('centered-logo');
+        pegpoLogo.classList.add('top-left-logo');
 
         setTimeout(() => {
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
