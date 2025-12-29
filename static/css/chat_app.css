@@ -1,0 +1,924 @@
+/* --- CUSTOM CSS STYLES --- */
+:root {
+    --sidebar-bg: #1F2121;
+    --inactive-btn-bg: #2A2E2D;
+    --avatar-ai-bg: #6F7574;
+    --sidebar-width: 90px;
+    --sep-color: rgba(135, 135, 135, 0.25);
+    --inactive-icon-color: rgba(255, 255, 255, 0.6);
+    --active-icon-color: #FFFFFF;
+    --chat-rect-bg: #1F2121;
+    --chat-border-color: rgba(111, 117, 116, 0.4);
+    --placeholder-color: #FFFFFF;
+    --pill-bg: #2A2E2D;
+    --main-bg: #191A1A;
+    --input-height: 146px;
+    --input-padding: 20px;
+}
+
+/* Enable page scrolling (scrollbar at browser edge) */
+html,
+body {
+    height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    background-color: var(--main-bg) !important;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    overflow-y: auto;
+}
+
+/* Sidebar Styling */
+#sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background-color: var(--sidebar-bg) !important;
+    border-color: #1A1A1A !important;
+    height: 100vh;
+    z-index: 1030;
+    transition: transform 0.3s ease-out;
+}
+
+@media (max-width: 991px) {
+    #sidebar {
+        position: fixed !important;
+        transform: translateX(-100%);
+    }
+
+    .sidebar-open #sidebar {
+        transform: translateX(0);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+    }
+}
+
+.sidebar-open:before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1020;
+    display: block;
+}
+
+.sidebar-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: var(--inactive-icon-color);
+}
+
+.sidebar-icon-wrapper:hover {
+    background-color: var(--inactive-btn-bg);
+}
+
+.avatar-ai {
+    width: 55px;
+    height: 55px;
+    background-color: var(--avatar-ai-bg);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.new-btn {
+    width: 50px;
+    height: 50px;
+    background-color: var(--inactive-btn-bg);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    border: none;
+}
+
+.nav-link-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    text-decoration: none;
+    color: var(--inactive-icon-color);
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.nav-link-item.active .sidebar-icon-wrapper {
+    background-color: var(--inactive-btn-bg);
+    color: var(--active-icon-color);
+}
+
+.nav-link-item.active {
+    color: var(--active-icon-color);
+    font-weight: 600;
+}
+
+.sidebar-separator {
+    width: 55px;
+    height: 1px;
+    background-color: var(--sep-color);
+    margin: 10px auto;
+}
+
+/* Main Area / Chat Input Styling */
+.main-area {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: visible;
+}
+
+.main-area-container {
+    padding-top: 2rem;
+    width: 100%;
+}
+
+/* Centering container */
+#initial-center-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.5s ease-in-out;
+    z-index: 10;
+    width: 761px;
+    max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#initial-center-container.bottom-fixed {
+    top: unset;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.chat-rect-container {
+    width: 100%;
+    min-height: var(--input-height);
+    border-radius: 23px;
+    background-color: var(--chat-rect-bg) !important;
+    border: 1px solid var(--chat-border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    order: 2;
+    /* after logo when centered */
+}
+
+/* Chat content */
+#chat-content {
+    padding-top: 20px;
+    max-width: 761px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-y: visible;
+    flex-grow: 1;
+}
+
+#chat-content.active-chat {
+    padding-bottom: calc(var(--input-height) + var(--input-padding) + 40px);
+    overflow-y: auto;
+    max-height: calc(100vh - 220px);
+}
+
+.chat-input-textarea {
+    color: #FFFFFF !important;
+    font-size: 18px;
+    font-weight: 400;
+    resize: none;
+    box-shadow: none;
+    background-color: transparent !important;
+}
+
+.control-pill-wrapper {
+    width: 130px;
+    height: 43px;
+    border-radius: 12px;
+    background-color: var(--pill-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+}
+
+.control-pill-ai {
+    width: 39px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(77, 139, 231, 0.2) 0%, rgba(129, 67, 177, 0.2) 100%);
+    border: 1px solid;
+    border-image: linear-gradient(180deg, rgba(77, 139, 231, 0.7) 0%, rgba(129, 67, 177, 0.7) 100%) 1;
+    font-size: 1.1rem;
+}
+
+.send-button-wrapper {
+    width: 43px;
+    height: 39px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #4D8BE7 0%, #8143B1 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.send-button-wrapper:hover:not([disabled]) {
+    opacity: 0.8;
+}
+
+.send-button-wrapper[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-control-icon {
+    font-size: 1.2rem;
+    opacity: 0.5;
+    cursor: pointer;
+    margin: 0 5px;
+}
+
+#action-pills {
+    margin-top: 15px;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+    order: 3;
+}
+
+#action-pills.hidden {
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    margin-top: 0;
+    overflow: hidden;
+}
+
+.action-pill {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background-color: var(--pill-bg);
+    border: none;
+    color: white;
+    margin: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.action-pill:hover {
+    background-color: #3A3E3D;
+}
+
+.floating-controls {
+    position: fixed;
+    bottom: 30px;
+    right: 120px;
+    display: flex;
+    gap: 10px;
+    z-index: 9;
+}
+
+.floating-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #191A1A;
+    border: 1px solid #3C3C3C;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+/* --- CHAT BUBBLE STYLES --- */
+.chat-bubble {
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    max-width: 90%;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.chat-bubble.user {
+    background-color: #3A3E3D;
+    margin-left: auto;
+    margin-right: 0;
+    border-bottom-right-radius: 5px;
+}
+
+.chat-bubble.ai {
+    background-color: var(--chat-rect-bg);
+    margin-right: auto;
+    margin-left: 0;
+    border-bottom-left-radius: 5px;
+    border: 1px solid var(--chat-border-color);
+}
+
+.typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: var(--placeholder-color);
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: pulse 1s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1.0);
+    }
+
+    50% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+}
+
+/* PEGPO LOGO */
+.pegpo-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-weight: 600;
+    z-index: 20;
+    transition: all 0.5s ease-in-out;
+}
+
+/* Always centered above the rectangle */
+.pegpo-logo.centered-logo {
+    position: static;
+    align-self: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 24px;
+    /* gap above rectangle */
+}
+
+.pegpo-logo .logo-text {
+    letter-spacing: 0.03em;
+}
+
+.pro-tag {
+    font-size: 14px;
+    background-color: #8143B1;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+@media (max-width: 991px) {
+    .main-area-container {
+        padding-top: 1rem;
+    }
+
+    #initial-center-container {
+        width: 95%;
+    }
+
+    #initial-center-container.bottom-fixed {
+        width: 95%;
+    }
+
+    #chat-content {
+        max-width: 100%;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .floating-controls {
+        display: none;
+    }
+}
+
+/* --- PROJECTS SIDEBAR PANEL --- */
+#projects-sidebar-panel {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    width: 250px;
+    height: 100vh;
+    background-color: #1a1a1a;
+    border-right: 1px solid #1a1a1a;
+    z-index: 1025;
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#projects-sidebar-panel.active {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+.project-item {
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.project-item:hover {
+    background-color: #2A2E2D;
+}
+
+.project-icon-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+}
+
+.project-icon-circle.green {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.project-icon-circle.blue {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+.project-icon-circle.purple {
+    background-color: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+    border: 1px solid #9b59b6;
+}
+
+.project-icon-circle.red {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.project-icon-circle.orange {
+    background-color: rgba(243, 156, 18, 0.2);
+    color: #f39c12;
+    border: 1px solid #f39c12;
+}
+
+/* --- EXTENDED MODAL & OVERLAY --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.create-project-modal {
+    background-color: #191A1A;
+    width: 600px;
+    max-width: 95%;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .create-project-modal {
+    transform: translateY(0);
+}
+
+/* Input Styling */
+.project-input {
+    background-color: #222 !important;
+    border: 1px solid #333 !important;
+    color: white !important;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.project-input::placeholder {
+    color: #888;
+}
+
+.project-input:focus {
+    box-shadow: 0 0 0 2px #4D8BE7;
+    border-color: #4D8BE7 !important;
+}
+
+/* Pills Styling */
+.project-pill-select {
+    background-color: transparent;
+    border: 1px solid #333;
+    border-radius: 12px;
+    color: #aaa;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.project-pill-select:hover {
+    background-color: #2A2E2D;
+    color: white;
+}
+
+.project-pill-select.active {
+    background-color: #2A2E2D;
+    border-color: #666;
+    color: white;
+}
+
+/* Icon circles in pills */
+.circle-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+}
+
+.circle-icon.green {
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.circle-icon.blue {
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+.circle-icon.purple {
+    color: #9b59b6;
+    border: 1px solid #9b59b6;
+}
+
+.circle-icon.red {
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.circle-icon.orange {
+    color: #f39c12;
+    border: 1px solid #f39c12;
+}
+
+/* Info Box */
+.project-info-box {
+    background-color: #222;
+    border-radius: 8px;
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Create Button */
+.btn-create-project {
+    background-color: #2A2E2D;
+    color: white;
+    border: 1px solid #444;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+
+/* --- EXPLORE SIDEBAR PANEL --- */
+#explore-sidebar-panel {
+    position: fixed;
+    /* Center vertically */
+    top: 50%;
+    transform: translateY(-50%) translateX(-20px);
+    /* Start slightly left for anim */
+    left: 105px;
+    /* Sidebar (90px) + Gap (15px) */
+    width: 360px;
+    max-height: 90vh;
+    height: auto;
+
+    background-color: #1F2121;
+    /* Match sidebar/card bg */
+    border: 1px solid #333;
+    border-radius: 24px;
+    z-index: 1025;
+    padding: 25px;
+
+    /* Animation state: Hidden */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+}
+
+#explore-sidebar-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+    pointer-events: all;
+}
+
+/* Arrow Pointer */
+#explore-sidebar-panel::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    /* Push out to left */
+    top: 50%;
+    /* Center relative to panel */
+    transform: translateY(-50%);
+    /* If panel is centered, this centers the arrow */
+    /* Wait, if the Explore icon is NOT vertically centered on screen, this will be wrong.
+       The Explore icon is the 3rd item in the nav.
+       It's roughly: 2rem(32px) + 50px(home) + 10px(sep) + 50px(projects) + 50px(explore) approx.
+       That is NOT center of screen.
+       
+       We need to position the panel relative to the Explore Nav Item if possible, or fix the Top position.
+       
+       Let's approximate positions based on the Sidebar CSS.
+       Sidebar has padding-top: 2rem.
+       Home: 50px + 10px + 10px.
+       Separator: 20px.
+       Projects: 50px + 20px.
+       Explore: 50px + 20px.
+       
+       Actually, `nav-link-item` has padding 10px 0. Icon is 50px. Text is below.
+       It's quite tall.
+       
+       If I use `top: 50%`, the arrow points to the middle of the panel. 
+       If the panel is centered on screen, the arrow points to center of screen.
+       Is the Explore icon in the center of the screen? Valid question.
+       
+       In the provided design image, the Explore icon is the 3rd main icon. 
+       However, the panel arrow points to it.
+       
+       Safest Bet: Hardcode `top` to align with Explore icon, or center the panel based on assumption.
+       The user design screenshot shows the panel roughly centered vertically.
+       Let's stick to `top: 50%` and adjust the arrow if needed.
+       OR, we can calculate the arrow offset.
+       
+       Let's try to center the panel on the screen as it looks good and fits most layouts.
+       But the Arrow must point to the Explore button.
+       The Explore button is roughly at top ~300px?
+       
+       Let's put the arrow at `top: 40%` maybe?
+       Or removing the arrow if alignment is risky.
+       The design (Image 1 previously) DID show a notch.
+       I'll add the arrow at `top: 50%` for now. If it looks off, the user will say.
+    */
+    border-width: 8px 8px 8px 0;
+    border-style: solid;
+    border-color: transparent #333 transparent transparent;
+    /* border color */
+    display: block;
+    box-sizing: border-box;
+}
+
+/* Inner white arrow to cover border */
+#explore-sidebar-panel::after {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 8px 8px 8px 0;
+    border-style: solid;
+    border-color: transparent #1F2121 transparent transparent;
+    /* Match bg */
+}
+
+
+.agents-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 10px;
+    /* Increased Vertical Gap */
+    justify-items: center;
+    margin-top: 10px;
+}
+
+.agent-grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    text-align: center;
+    width: 60px;
+    transition: transform 0.2s;
+}
+
+.agent-grid-item:hover {
+    transform: translateY(-2px);
+}
+
+.agent-icon-wrapper {
+    width: 50px;
+    /* Slightly larger */
+    height: 50px;
+    border-radius: 16px;
+    /* More rounded */
+    background: #252828;
+    /* Slightly lighter inner tile */
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.3rem;
+    color: #a8a8a8;
+    transition: all 0.2s;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.agent-icon-wrapper:hover {
+    color: white;
+    background-color: #2F3333;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.agent-label {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 8px;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+/* Gradient Text for Icons (Global) */
+.agent-icon-wrapper i,
+.ai-text-icon {
+    background: linear-gradient(135deg, #4D8BE7, #8143B1);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 4px rgba(77, 139, 231, 0.2));
+}
+
+/* Small plus overlay customization */
+.small-plus-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: none !important;
+    -webkit-text-fill-color: white !important;
+    /* Make plus white or gradient? Design usually white or matching */
+    color: white;
+    background-clip: border-box !important;
+    font-size: 14px !important;
+    padding: 2px;
+    border-radius: 50%;
+    background-color: #1F2121 !important;
+    /* Cutout effect */
+}
+
+/* Adjust the grid/plus icon specifically */
+.agent-icon-wrapper.custom-plus {
+    position: relative;
+}
+
+.agent-icon-wrapper.custom-plus i.bi-grid-fill {
+    font-size: 1.1rem;
+}
+
+.agent-icon-wrapper.custom-plus .small-plus-overlay {
+    bottom: 8px;
+    right: 8px;
+    font-size: 10px !important;
+    background: linear-gradient(135deg, #4D8BE7, #8143B1) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Header Text Styles */
+#explore-sidebar-panel h6 {
+    color: #fff;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    padding-left: 5px;
+    opacity: 0.9;
+}
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+@media (max-width: 991px) {
+
+    /* Adjust positioning for Explore Panel on smaller screens */
+    #explore-sidebar-panel {
+        /* Fit within the available space to the right of the sidebar */
+        left: 100px;
+        /* Sidebar is fixed in open state or overlay */
+        right: 15px;
+        /* Margin from right edge */
+        width: auto;
+        /* Allow auto width based on left/right constraints */
+        max-width: 360px;
+        /* But don't exceed original max */
+        transform: translateY(-50%) translateX(0);
+        /* Simplified transform */
+    }
+
+    /* Arrow adjustment if needed (keep it pointing to sidebar) */
+    /* 
+    #explore-sidebar-panel::before,
+    #explore-sidebar-panel::after {
+         Ensure arrow stays vertically centered or aligned 
+    } 
+    */
+}
+
+@media (max-width: 576px) {
+
+    /* Mobile Narrow: Reduce grid columns */
+    .agents-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px 5px;
+    }
+
+    #explore-sidebar-panel {
+        left: 85px;
+        /* Slightly tighter to sidebar */
+        right: 10px;
+        padding: 15px;
+        border-radius: 16px;
+    }
+
+    .agent-grid-item {
+        width: 50px;
+        /* Resize items slightly down */
+    }
+
+    .agent-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+
+    .agent-label {
+        font-size: 9px;
+    }
+}
