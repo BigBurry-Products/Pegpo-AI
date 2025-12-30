@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Response Demo - Pegpo</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/chat_app.css' %}?v=7">
+    <link rel="stylesheet" href="{% static 'css/response.css' %}?v=1">
+
+    <style>
+        /* Demo-specific styles */
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .demo-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 10px;
+        }
+
+        .demo-header p {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>Response Section Demo</h1>
+            <p>This demonstrates the response layout based on the Figma design</p>
+        </div>
+
+        <!-- Response will be inserted here -->
+        <div id="response-demo"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/response.js' %}?v=1"></script>
+    <script>
+        // Initialize the response handler
+        const responseHandler = new ResponseHandler();
+
+        // Sample data matching the Figma design
+        const sampleData = {
+            answer: `NASA's X-59 supersonic jet completed its maiden flight on October 28, 2025. The experimental aircraft took off from Lockheed Martin's Skunk Works facility at Palmdale, California, and flew over the Southern California desert toward Edwards Air Force Base. The entire flight was subsonic, lasting just over an hour, designed to test the aircraft systems at lower speeds and altitudes before progressing to supersonic speeds. The X-59 is engineered to break the sound barrier quietly, producing a soft "sonic thump" instead of a loud sonic boom, enabling potential future commercial supersonic flights over land. It aims to cruise at Mach 1.4 at 55,000 feet altitude, significantly reducing noise impact. This milestone marks a significant step toward changing regulations that currently ban loud supersonic flights over land.`,
+
+            images: [
+                {
+                    url: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=400&h=300&fit=crop',
+                    alt: 'Sunset aircraft on runway'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1583991928892-1d5d8e5b5d5d?w=400&h=300&fit=crop',
+                    alt: 'X-59 in flight'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=300&fit=crop',
+                    alt: 'Aircraft side view'
+                },
+                {
+                    url: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400&h=300&fit=crop',
+                    alt: 'Aircraft in sky'
+                }
+            ],
+
+            sources: ResponseHandler.generateDummySources(10),
+
+            relatedQuestions: [
+                "List the top mountain for each common height definition",
+                "Which mountain is highest above sea level",
+                "Which mountain is tallest from earths center",
+                "List the top mountain for each common height definition"
+            ]
+        };
+
+        // Create and display the response
+        const responseHTML = responseHandler.createResponse(
+            "NASA X-59 supersonic jet maiden flight",
+            sampleData
+        );
+
+        // Insert into the demo container
+        const demoContainer = document.getElementById('response-demo');
+        demoContainer.innerHTML = responseHTML;
+
+        // Initialize event listeners
+        const responseElement = demoContainer.querySelector('.response-container');
+        responseHandler.initializeEventListeners(responseElement);
+
+        // Log for debugging
+        console.log('Response demo loaded successfully');
+    </script>
+</body>
+
+</html>

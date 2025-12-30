@@ -20,6 +20,16 @@ const pegpoLogo = document.getElementById('pegpoLogo');
 let isProcessing = false;
 let isChatActive = false;
 
+// ===== Response Handler for formatting AI responses =====
+const responseHandler = new ResponseHandler();
+let currentResponseData = {
+    query: '',
+    answer: '',
+    images: [],
+    sources: [],
+    relatedQuestions: []
+};
+
 // ===== Streaming / Stop control (Step 1) =====
 let abortController = null;   // controls fetch cancel
 let isStreaming = false;     // true while AI is responding
@@ -72,7 +82,11 @@ function centerInputBox() {
     pegpoLogo.classList.add('centered-logo');
     pegpoLogo.classList.remove('top-left-logo');
 
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Scroll to top
+    const mainArea = document.querySelector('.main-area');
+    if (mainArea) {
+        mainArea.scrollTop = 0;
+    }
 }
 
 function moveInputBoxToBottom() {
@@ -89,8 +103,12 @@ function moveInputBoxToBottom() {
         pegpoLogo.classList.remove('centered-logo');
         pegpoLogo.classList.add('top-left-logo');
 
+        // Auto-scroll to bottom after transition
         setTimeout(() => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            const mainArea = document.querySelector('.main-area');
+            if (mainArea) {
+                mainArea.scrollTop = mainArea.scrollHeight;
+            }
         }, 350);
     }
 }
@@ -115,10 +133,10 @@ function simulateTyping(element, text) {
         function typeChar() {
             if (i < text.length) {
                 element.innerHTML += text.charAt(i);
-                if (chatContent.classList.contains('active-chat')) {
-                    chatContent.scrollTop = chatContent.scrollHeight;
-                } else {
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+                // Auto-scroll to bottom
+                const mainArea = document.querySelector('.main-area');
+                if (mainArea) {
+                    mainArea.scrollTop = mainArea.scrollHeight;
                 }
                 i++;
                 setTimeout(typeChar, typingSpeed);
@@ -141,10 +159,10 @@ async function startTyping(element) {
     while (typingQueue.length > 0 && !stopRequested) {
         element.textContent += typingQueue.shift();
 
-        if (chatContent.classList.contains('active-chat')) {
-            chatContent.scrollTop = chatContent.scrollHeight;
-        } else {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+        // Auto-scroll to bottom
+        const mainArea = document.querySelector('.main-area');
+        if (mainArea) {
+            mainArea.scrollTop = mainArea.scrollHeight;
         }
 
         await new Promise(r => setTimeout(r, 12)); // typing speed
@@ -181,10 +199,10 @@ function createMessageElement(role, text, isTyping = false) {
     chatContent.appendChild(wrapper);
     wrapper.appendChild(bubble);
 
-    if (chatContent.classList.contains('active-chat')) {
-        chatContent.scrollTop = chatContent.scrollHeight;
-    } else {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+    // Auto-scroll to bottom
+    const mainArea = document.querySelector('.main-area');
+    if (mainArea) {
+        mainArea.scrollTop = mainArea.scrollHeight;
     }
 
     return bubble;
@@ -199,7 +217,26 @@ async function fetchGeminiResponse(prompt) {
 
     moveInputBoxToBottom();
 
-    const aiBubble = createMessageElement('ai', '', true);
+    // Initialize response data
+    currentResponseData = {
+        query: prompt,
+        answer: '',
+        images: [],
+        sources: ResponseHandler.generateDummySources(10), // Dummy sources
+        relatedQuestions: ResponseHandler.generateDummyRelatedQuestions()
+    };
+
+    // Create a temporary container for the response
+    const responseWrapper = document.createElement('div');
+    responseWrapper.className = 'response-wrapper';
+    chatContent.appendChild(responseWrapper);
+
+    // Show typing indicator initially
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'chat-bubble ai';
+    typingIndicator.id = 'aiTypingIndicator';
+    typingIndicator.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+    responseWrapper.appendChild(typingIndicator);
 
     try {
         const resp = await fetch("/api/chat/", {
@@ -209,18 +246,30 @@ async function fetchGeminiResponse(prompt) {
             signal: abortController.signal
         });
 
-
         if (!resp.ok) {
             throw new Error(`Server error ${resp.status}`);
         }
 
-        aiBubble.removeAttribute('id');
-        aiBubble.innerHTML = ""; // start empty
+        // Remove typing indicator
+        typingIndicator.remove();
+
+        // Create the response section HTML
+        let responseHTML = responseHandler.createResponse(prompt, currentResponseData);
+        responseWrapper.innerHTML = responseHTML;
+
+        // Get the answer text element for streaming
+        const answerElement = responseWrapper.querySelector('.response-answer-text');
+        if (!answerElement) {
+            throw new Error('Response element not found');
+        }
+
+        answerElement.textContent = ''; // Start empty
 
         const reader = resp.body.getReader();
         const decoder = new TextDecoder("utf-8");
 
         let buffer = "";
+        let fullAnswer = "";
 
         while (true) {
             const { value, done } = await reader.read();
@@ -241,30 +290,41 @@ async function fetchGeminiResponse(prompt) {
                     break;
                 }
 
+                // Add chunk to typing queue
+                fullAnswer += chunk;
                 typingQueue.push(...chunk);
-                startTyping(aiBubble);
+                startTyping(answerElement);
 
-
-                if (chatContent.classList.contains('active-chat')) {
-                    chatContent.scrollTop = chatContent.scrollHeight;
-                } else {
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+                // Auto-scroll to bottom
+                const mainArea = document.querySelector('.main-area');
+                if (mainArea) {
+                    mainArea.scrollTop = mainArea.scrollHeight;
                 }
             }
         }
 
+        // Store the full answer
+        currentResponseData.answer = fullAnswer;
+
+        // Initialize event listeners for the response section
+        const responseElement = responseWrapper.querySelector('.response-container');
+        if (responseElement) {
+            responseHandler.initializeEventListeners(responseElement);
+        }
+
     } catch (err) {
         console.error("Streaming error:", err);
-        aiBubble.textContent = "Sorry — couldn't get a response.";
+
+        // Show error in a simple bubble
+        responseWrapper.innerHTML = '';
+        const errorBubble = document.createElement('div');
+        errorBubble.className = 'chat-bubble ai';
+        errorBubble.textContent = "Sorry — couldn't get a response.";
+        errorBubble.style.color = '#e74c3c';
+        responseWrapper.appendChild(errorBubble);
     } finally {
         isProcessing = false;
-        //isStreaming = false;
-        //setSendMode();
-        //sendButton.disabled = chatInput.value.trim() === '';
     }
-
-
-
 }
 
 
@@ -506,3 +566,23 @@ if (addProjectBtnSidebar && createProjectModalOverlay) {
         });
     }
 }
+
+// --- 8. RESPONSE SECTION EVENT LISTENERS ---
+// Handle related question clicks
+window.addEventListener('new-query', (event) => {
+    const query = event.detail.query;
+    if (query) {
+        chatInput.value = query;
+        handleUserInput();
+    }
+});
+
+// Handle rewrite requests
+window.addEventListener('rewrite-query', (event) => {
+    const query = event.detail.query;
+    if (query) {
+        chatInput.value = `Please rewrite your previous response about: ${query}`;
+        handleUserInput();
+    }
+});
+
