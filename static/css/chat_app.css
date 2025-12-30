@@ -37,7 +37,7 @@ body {
     background-color: var(--sidebar-bg) !important;
     border-color: #1A1A1A !important;
     height: 100vh;
-    z-index: 1030;
+    z-index: 2000;
     transition: transform 0.3s ease-out;
 }
 
@@ -61,7 +61,7 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1020;
+    z-index: 1900;
     display: block;
 }
 
@@ -380,18 +380,35 @@ body {
     gap: 10px;
     color: white;
     font-weight: 600;
-    z-index: 20;
+    z-index: 1050;
     transition: all 0.5s ease-in-out;
+    /* Default is static flow */
 }
 
-/* Always centered above the rectangle */
+/* Centered: restored to flow normally in the flex container */
 .pegpo-logo.centered-logo {
     position: static;
-    align-self: center;
-    justify-content: center;
+    transform: none;
     font-size: 32px;
     margin-bottom: 24px;
-    /* gap above rectangle */
+}
+
+/* Top Left: Absolute positioning relative to main area */
+.pegpo-logo.top-left-logo {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    font-size: 1.25rem;
+    margin: 0;
+    transform: none;
+}
+
+/* Mobile adjustment for fixed logo */
+@media (max-width: 991px) {
+    .pegpo-logo.top-left-logo {
+        left: 24px;
+        top: 20px;
+    }
 }
 
 .pegpo-logo .logo-text {
@@ -438,7 +455,7 @@ body {
     height: 100vh;
     background-color: #1a1a1a;
     border-right: 1px solid #1a1a1a;
-    z-index: 1025;
+    z-index: 1060;
     padding-top: 2rem;
     padding-bottom: 1rem;
     padding-left: 1rem;
@@ -664,7 +681,7 @@ body {
     /* Match sidebar/card bg */
     border: 1px solid #333;
     border-radius: 24px;
-    z-index: 1025;
+    z-index: 1060;
     padding: 25px;
 
     /* Animation state: Hidden */
