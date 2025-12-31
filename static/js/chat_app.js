@@ -98,18 +98,25 @@ function moveInputBoxToBottom() {
         chatContent.classList.add('active-chat');
         isChatActive = true;
 
-        // Move logo DOM element to main area and switch class
-        mainContentArea.prepend(pegpoLogo);
+        // Move logo DOM element to fixed header container
+        const headerLogoContainer = document.getElementById('headerLogoContainer');
+        if (headerLogoContainer) {
+            headerLogoContainer.appendChild(pegpoLogo);
+        } else {
+            // Fallback if header container missing
+            mainContentArea.prepend(pegpoLogo);
+        }
+
         pegpoLogo.classList.remove('centered-logo');
         pegpoLogo.classList.add('top-left-logo');
 
-        // Auto-scroll to bottom after transition
-        setTimeout(() => {
+        // Auto-scroll to bottom after transition - REMOVED
+        /*setTimeout(() => {
             const mainArea = document.querySelector('.main-area');
             if (mainArea) {
                 mainArea.scrollTop = mainArea.scrollHeight;
             }
-        }, 350);
+        }, 350);*/
     }
 }
 
@@ -133,11 +140,11 @@ function simulateTyping(element, text) {
         function typeChar() {
             if (i < text.length) {
                 element.innerHTML += text.charAt(i);
-                // Auto-scroll to bottom
-                const mainArea = document.querySelector('.main-area');
+                // Auto-scroll to bottom - REMOVED
+                /*const mainArea = document.querySelector('.main-area');
                 if (mainArea) {
                     mainArea.scrollTop = mainArea.scrollHeight;
-                }
+                }*/
                 i++;
                 setTimeout(typeChar, typingSpeed);
             } else {
@@ -159,11 +166,11 @@ async function startTyping(element) {
     while (typingQueue.length > 0 && !stopRequested) {
         element.textContent += typingQueue.shift();
 
-        // Auto-scroll to bottom
-        const mainArea = document.querySelector('.main-area');
+        // Auto-scroll to bottom - REMOVED
+        /*const mainArea = document.querySelector('.main-area');
         if (mainArea) {
             mainArea.scrollTop = mainArea.scrollHeight;
-        }
+        }*/
 
         await new Promise(r => setTimeout(r, 12)); // typing speed
     }
@@ -199,11 +206,11 @@ function createMessageElement(role, text, isTyping = false) {
     chatContent.appendChild(wrapper);
     wrapper.appendChild(bubble);
 
-    // Auto-scroll to bottom
-    const mainArea = document.querySelector('.main-area');
-    if (mainArea) {
-        mainArea.scrollTop = mainArea.scrollHeight;
-    }
+    // Auto-scroll to bottom - REMOVED AS REQUESTED
+    // const mainArea = document.querySelector('.main-area');
+    // if (mainArea) {
+    //     mainArea.scrollTop = mainArea.scrollHeight;
+    // }
 
     return bubble;
 }
@@ -217,7 +224,7 @@ async function fetchGeminiResponse(prompt) {
 
     moveInputBoxToBottom();
 
-    // Initialize response data
+    // Initialize response data with dummy content immediately
     currentResponseData = {
         query: prompt,
         answer: '',
@@ -231,12 +238,15 @@ async function fetchGeminiResponse(prompt) {
     responseWrapper.className = 'response-wrapper';
     chatContent.appendChild(responseWrapper);
 
-    // Show typing indicator initially
-    const typingIndicator = document.createElement('div');
-    typingIndicator.className = 'chat-bubble ai';
-    typingIndicator.id = 'aiTypingIndicator';
-    typingIndicator.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-    responseWrapper.appendChild(typingIndicator);
+    // Render the response layout immediately (Heading, Tabs, Sidebar)
+    let responseHTML = responseHandler.createResponse(prompt, currentResponseData);
+    responseWrapper.innerHTML = responseHTML;
+
+    // Initialize event listeners for the response section
+    const responseElement = responseWrapper.querySelector('.response-container');
+    if (responseElement) {
+        responseHandler.initializeEventListeners(responseElement);
+    }
 
     try {
         const resp = await fetch("/api/chat/", {
@@ -249,13 +259,6 @@ async function fetchGeminiResponse(prompt) {
         if (!resp.ok) {
             throw new Error(`Server error ${resp.status}`);
         }
-
-        // Remove typing indicator
-        typingIndicator.remove();
-
-        // Create the response section HTML
-        let responseHTML = responseHandler.createResponse(prompt, currentResponseData);
-        responseWrapper.innerHTML = responseHTML;
 
         // Get the answer text element for streaming
         const answerElement = responseWrapper.querySelector('.response-answer-text');
@@ -295,22 +298,16 @@ async function fetchGeminiResponse(prompt) {
                 typingQueue.push(...chunk);
                 startTyping(answerElement);
 
-                // Auto-scroll to bottom
-                const mainArea = document.querySelector('.main-area');
+                // Auto-scroll to bottom - REMOVED
+                /*const mainArea = document.querySelector('.main-area');
                 if (mainArea) {
                     mainArea.scrollTop = mainArea.scrollHeight;
-                }
+                }*/
             }
         }
 
         // Store the full answer
         currentResponseData.answer = fullAnswer;
-
-        // Initialize event listeners for the response section
-        const responseElement = responseWrapper.querySelector('.response-container');
-        if (responseElement) {
-            responseHandler.initializeEventListeners(responseElement);
-        }
 
     } catch (err) {
         console.error("Streaming error:", err);
@@ -357,7 +354,7 @@ async function handleUserInput() {
     chatInput.value = '';
     sendButton.disabled = false;
 
-    createMessageElement('user', prompt);
+    // createMessageElement('user', prompt); // User bubble removed as per design request
 
     if (appContainer.classList.contains('sidebar-open')) {
         toggleSidebar(false);
