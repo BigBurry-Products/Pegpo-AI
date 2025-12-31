@@ -20,14 +20,13 @@
 html,
 body {
     height: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 body {
     background-color: var(--main-bg) !important;
     color: white;
     font-family: 'Inter', sans-serif;
-    overflow-y: auto;
 }
 
 /* Sidebar Styling */
@@ -136,12 +135,14 @@ body {
 
 /* Main Area / Chat Input Styling */
 .main-area {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    overflow: visible;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
 }
 
 .main-area-container {
@@ -165,10 +166,12 @@ body {
 }
 
 #initial-center-container.bottom-fixed {
+    position: fixed;
     top: unset;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 100;
 }
 
 .chat-rect-container {
@@ -185,18 +188,18 @@ body {
 /* Chat content */
 #chat-content {
     padding-top: 20px;
-    max-width: 761px;
+    padding-left: 20px;
+    padding-right: 20px;
     width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 100%;
     overflow-y: visible;
     flex-grow: 1;
+    padding-bottom: 200px;
 }
 
 #chat-content.active-chat {
-    padding-bottom: calc(var(--input-height) + var(--input-padding) + 40px);
-    overflow-y: auto;
-    max-height: calc(100vh - 220px);
+    padding-bottom: 200px;
+    overflow-y: visible;
 }
 
 .chat-input-textarea {
@@ -257,6 +260,18 @@ body {
     opacity: 0.5;
     cursor: pointer;
     margin: 0 5px;
+}
+
+@media (max-width: 576px) {
+    .control-pill-wrapper {
+        width: auto;
+        padding: 0 5px;
+    }
+
+    .chat-control-icon {
+        margin: 0 2px;
+        font-size: 1.1rem;
+    }
 }
 
 #action-pills {
@@ -436,9 +451,8 @@ body {
     }
 
     #chat-content {
-        max-width: 100%;
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 15px;
+        padding-right: 15px;
     }
 
     .floating-controls {

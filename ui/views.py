@@ -20,6 +20,12 @@ def chat_view(request):
     return render(request, "chat_app.html")
 
 
+def response_demo_view(request):
+    """Demo page for the response section"""
+    return render(request, "response_demo.html")
+
+
+
 def sse_format(data: str) -> str:
     return f"data: {data}\n\n"
 
