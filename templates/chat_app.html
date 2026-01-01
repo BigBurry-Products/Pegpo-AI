@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/chat_app.css' %}?v=17">
-    <link rel="stylesheet" href="{% static 'css/response.css' %}?v=10">
+    <link rel="stylesheet" href="{% static 'css/chat_app.css' %}?v=18">
+    <link rel="stylesheet" href="{% static 'css/response.css' %}?v=11">
 </head>
 
 <body>
@@ -80,6 +80,11 @@
                     <span class="logo-text">Pegpo</span>
                     <span class="pro-tag">Pro</span>
                 </div>
+
+                <!-- Scroll to Bottom Button -->
+                <button id="scrollToBottomBtn" class="scroll-bottom-btn hidden">
+                    <i class="bi bi-arrow-down"></i>
+                </button>
 
                 <!-- INPUT SECTION (Rectangle) -->
                 <section class="chat-rect-container d-flex flex-column p-3 p-md-4">
@@ -340,7 +345,7 @@
 
     <!-- 5. Include Firebase JS SDKs -->
     <script src="{% static 'js/response.js' %}?v=5"></script>
-    <script type="module" src="{% static 'js/chat_app.js' %}?v=9"></script>
+    <script type="module" src="{% static 'js/chat_app.js' %}?v=14"></script>
 </body>
 
 </html>

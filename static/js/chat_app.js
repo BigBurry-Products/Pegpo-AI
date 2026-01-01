@@ -16,6 +16,8 @@ const actionPills = document.getElementById('action-pills');
 const menuToggle = document.getElementById('menuToggle');
 const mainContentArea = document.getElementById('mainContentArea');
 const pegpoLogo = document.getElementById('pegpoLogo');
+const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+let userScrolledUp = false;
 
 let isProcessing = false;
 let isChatActive = false;
@@ -166,11 +168,23 @@ async function startTyping(element) {
     while (typingQueue.length > 0 && !stopRequested) {
         element.textContent += typingQueue.shift();
 
-        // Auto-scroll to bottom - REMOVED
-        /*const mainArea = document.querySelector('.main-area');
-        if (mainArea) {
-            mainArea.scrollTop = mainArea.scrollHeight;
-        }*/
+        // Smart Auto-scroll: Follow the text cursor
+        if (!userScrolledUp && mainContentArea) {
+            const inputContainer = document.querySelector('#initial-center-container.bottom-fixed');
+            // Buffer space above input box (e.g. 80px)
+            const bottomPadding = inputContainer ? inputContainer.offsetHeight + 40 : 120;
+
+            const elRect = element.getBoundingClientRect();
+            const mainRect = mainContentArea.getBoundingClientRect();
+
+            // Check if the bottom of the text is hidden behind input box/bottom of screen
+            // overlap > 0 means the text extends below the safe viewing area
+            const overlap = elRect.bottom - (mainRect.bottom - bottomPadding);
+
+            if (overlap > 0) {
+                mainContentArea.scrollTop += overlap;
+            }
+        }
 
         await new Promise(r => setTimeout(r, 12)); // typing speed
     }
@@ -183,6 +197,9 @@ async function startTyping(element) {
         setSendMode();
         sendButton.disabled = false;
 
+        // Show Related Section if it exists (Scoped to current response)
+        const related = element.parentElement ? element.parentElement.querySelector('.response-related') : null;
+        if (related) related.classList.add('visible');
     }
 
 }
@@ -241,6 +258,18 @@ async function fetchGeminiResponse(prompt) {
     // Render the response layout immediately (Heading, Tabs, Sidebar)
     let responseHTML = responseHandler.createResponse(prompt, currentResponseData);
     responseWrapper.innerHTML = responseHTML;
+
+    // Scroll to the start of the new response (with offset for fixed header)
+    setTimeout(() => {
+        const headerOffset = 85; // Header height + padding
+        const elementPosition = responseWrapper.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + mainContentArea.scrollTop - headerOffset;
+
+        mainContentArea.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+        });
+    }, 10);
 
     // Initialize event listeners for the response section
     const responseElement = responseWrapper.querySelector('.response-container');
@@ -347,6 +376,10 @@ async function handleUserInput() {
 
 
     if (isProcessing) return;
+
+    // Reset Scroll State for new query
+    userScrolledUp = false;
+    if (scrollToBottomBtn) scrollToBottomBtn.classList.add('hidden');
 
     const prompt = chatInput.value.trim();
     if (prompt === "") return;
@@ -582,4 +615,51 @@ window.addEventListener('rewrite-query', (event) => {
         handleUserInput();
     }
 });
+
+// ===== Smart Auto-Scroll Logic (Interaction Based) =====
+function scrollToBottom() {
+    if (mainContentArea) {
+        mainContentArea.scrollTo({
+            top: mainContentArea.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+}
+
+function setupScrollLogic() {
+    if (mainContentArea) {
+        // Detect manual interaction (Wheel / Touch)
+        const handleInteraction = () => {
+            const threshold = 50;
+            // Safety check
+            if (mainContentArea.scrollHeight <= mainContentArea.clientHeight) return;
+
+            const distanceToBottom = mainContentArea.scrollHeight - mainContentArea.scrollTop - mainContentArea.clientHeight;
+
+            // If user is distinctly NOT at bottom
+            if (distanceToBottom > threshold) {
+                userScrolledUp = true;
+                if (scrollToBottomBtn) scrollToBottomBtn.classList.remove('hidden');
+            } else {
+                // User manually scrolled back to bottom -> Re-engage
+                userScrolledUp = false;
+                if (scrollToBottomBtn) scrollToBottomBtn.classList.add('hidden');
+            }
+        };
+
+        mainContentArea.addEventListener('wheel', handleInteraction, { passive: true });
+        mainContentArea.addEventListener('touchmove', handleInteraction, { passive: true });
+    }
+
+    if (scrollToBottomBtn) {
+        scrollToBottomBtn.addEventListener('click', () => {
+            userScrolledUp = false;
+            scrollToBottom();
+            scrollToBottomBtn.classList.add('hidden');
+        });
+    }
+}
+
+// Initialize Scroll Logic
+setupScrollLogic();
 

@@ -1022,3 +1022,37 @@ body {
         /* Increased padding */
     }
 }
+
+/* === SCROLL TO BOTTOM BUTTON === */
+.scroll-bottom-btn {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #333;
+    /* Distinct background */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.scroll-bottom-btn:hover {
+    background-color: #444;
+}
+
+.scroll-bottom-btn.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 10px);
+    pointer-events: none;
+}

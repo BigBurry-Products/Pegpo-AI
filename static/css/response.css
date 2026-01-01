@@ -244,6 +244,13 @@
     margin-top: 40px;
     padding-top: 28px;
     border-top: 1px solid rgba(111, 117, 116, 0.25);
+    display: none;
+    /* Hidden by default */
+}
+
+.response-related.visible {
+    display: block;
+    /* Show when finished */
 }
 
 .response-related-title {
