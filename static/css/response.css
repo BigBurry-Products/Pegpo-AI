@@ -6,7 +6,8 @@
 .response-container {
     width: 100%;
     max-width: 1600px;
-    margin: 20px auto;
+    margin: 20px 0 20px 20px;
+    /* Changed from auto to left-align */
     padding: 0 20px;
     display: flex;
     gap: 40px;
@@ -25,11 +26,12 @@
 }
 
 .response-query-text {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 600;
     color: #FFFFFF;
     line-height: 1.3;
     margin: 0;
+    letter-spacing: -0.02em;
 }
 
 /* Tab Navigation */
@@ -54,6 +56,64 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Mobile Toggle Button (Default Hidden) */
+.mobile-sources-toggle {
+    display: none;
+    background: rgba(111, 117, 116, 0.2);
+    border: none;
+    color: #4D8BE7;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.mobile-sources-toggle:active {
+    transform: scale(0.95);
+    background: rgba(111, 117, 116, 0.3);
+}
+
+.mobile-sources-toggle i {
+    font-size: 18px;
+}
+
+.mobile-sources-close {
+    display: none;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 8px;
+    margin-left: auto;
+}
+
+/* Mobile Overlay */
+.mobile-sources-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .response-tab:hover {
@@ -140,39 +200,39 @@
 
 /* Answer Text */
 .response-answer-text {
-    font-size: 16px;
-    line-height: 1.7;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 24px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 28px;
     white-space: pre-wrap;
+    font-weight: 400;
 }
 
 /* Action Buttons */
 .response-actions {
     display: flex;
-    gap: 16px;
-    margin-bottom: 32px;
+    gap: 12px;
+    margin-bottom: 36px;
 }
 
 .response-action-btn {
     background: transparent;
-    border: 1px solid rgba(111, 117, 116, 0.4);
-    color: rgba(255, 255, 255, 0.8);
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     transition: all 0.2s ease;
 }
 
 .response-action-btn:hover {
-    background: rgba(111, 117, 116, 0.2);
-    border-color: rgba(111, 117, 116, 0.6);
-    color: #FFFFFF;
+    background: rgba(111, 117, 116, 0.15);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .response-action-btn i {
@@ -181,16 +241,23 @@
 
 /* Related Section */
 .response-related {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(111, 117, 116, 0.3);
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(111, 117, 116, 0.25);
+    display: none;
+    /* Hidden by default */
+}
+
+.response-related.visible {
+    display: block;
+    /* Show when finished */
 }
 
 .response-related-title {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     color: #FFFFFF;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .response-related-list {
@@ -203,10 +270,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0;
+    padding: 14px 0;
     cursor: pointer;
-    transition: opacity 0.2s ease;
-    border-bottom: 1px solid rgba(111, 117, 116, 0.15);
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(111, 117, 116, 0.12);
+    gap: 16px;
 }
 
 .response-related-item:last-child {
@@ -214,61 +282,76 @@
 }
 
 .response-related-item:hover {
-    opacity: 0.7;
+    padding-left: 4px;
 }
+
+
 
 .response-related-item-text {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.75);
     flex: 1;
+    font-weight: 400;
 }
 
 .response-related-item-icon {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: rgba(111, 117, 116, 0.2);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 16px;
     flex-shrink: 0;
     transition: all 0.2s ease;
 }
 
 .response-related-item:hover .response-related-item-icon {
-    background: rgba(111, 117, 116, 0.3);
-    color: #FFFFFF;
+    color: rgba(255, 255, 255, 0.7);
 }
 
+/* Sources Sidebar */
 /* Sources Sidebar */
 .response-sources-sidebar {
     width: 320px;
     flex-shrink: 0;
     position: sticky;
     top: 20px;
-    height: fit-content;
+    height: calc(100vh - 40px);
+    /* Fixed height */
     max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Header stays, content scrolls */
+}
+
+/* Scrollable List Area */
+.response-sources-list {
     overflow-y: auto;
+    flex: 1;
+    padding-right: 4px;
+    /* Space for scrollbar */
     scrollbar-width: thin;
     scrollbar-color: rgba(111, 117, 116, 0.5) transparent;
 }
 
-.response-sources-sidebar::-webkit-scrollbar {
+.response-sources-list::-webkit-scrollbar {
     width: 6px;
 }
 
-.response-sources-sidebar::-webkit-scrollbar-track {
+.response-sources-list::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.response-sources-sidebar::-webkit-scrollbar-thumb {
+.response-sources-list::-webkit-scrollbar-thumb {
     background: rgba(111, 117, 116, 0.5);
     border-radius: 3px;
 }
 
-.response-sources-sidebar::-webkit-scrollbar-thumb:hover {
+.response-sources-list::-webkit-scrollbar-thumb:hover {
     background: rgba(111, 117, 116, 0.7);
 }
 
@@ -397,13 +480,50 @@
 @media (max-width: 991px) {
     .response-container {
         flex-direction: column;
+        gap: 0;
     }
 
+    /* Mobile Sidebar - Offcanvas Style */
     .response-sources-sidebar {
-        width: 100%;
-        position: static;
+        display: none;
+        /* Hidden by default on mobile */
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 85%;
+        max-width: 360px;
+        height: 100vh;
+        background-color: var(--card-bg, #1E1E1E);
+        z-index: 1050;
+        padding: 20px;
+        box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        margin-top: 0;
         max-height: none;
-        margin-top: 24px;
+    }
+
+    .response-sources-sidebar.active {
+        display: flex;
+        flex-direction: column;
+        transform: translateX(0);
+    }
+
+    .mobile-sources-toggle {
+        display: flex;
+        /* Show on mobile */
+    }
+
+    .mobile-sources-close {
+        display: flex;
+        /* Show close button */
+    }
+
+    .response-sources-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(111, 117, 116, 0.2);
     }
 
     .response-query-text {
