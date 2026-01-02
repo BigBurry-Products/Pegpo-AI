@@ -36,8 +36,13 @@ class ResponseHandler {
                 <!-- Main Response Area -->
                 <div class="response-main">
                     <!-- Response Header -->
-                    <div class="response-header">
-                        <h1 class="response-query-text">${this.escapeHtml(query)}</h1>
+                    <div class="response-header d-flex justify-content-between align-items-start gap-3">
+                        <h1 class="response-query-text mb-0">${this.escapeHtml(query)}</h1>
+                        
+                        <!-- Mobile Sources Toggle (Icon Button) -->
+                        <button class="mobile-sources-toggle icon-btn">
+                            <i class="bi bi-layout-text-sidebar-reverse"></i>
+                        </button>
                     </div>
 
                     <!-- Tab Navigation -->
@@ -58,7 +63,7 @@ class ResponseHandler {
 
                     <!-- Answer Tab Content -->
                     <div class="response-tab-content active" data-content="answer">
-                        ${images.length > 0 ? this.generateImageGallery(images) : ''}
+                        <!-- Image gallery removed as per user request -->
                         
                         <div class="response-answer-text">
                             ${this.formatAnswerText(answer)}
@@ -166,11 +171,17 @@ class ResponseHandler {
         return `
             <aside class="response-sources-sidebar">
                 <div class="response-sources-header">
-                    <div class="response-sources-icon">
-                        <i class="bi bi-link-45deg"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="response-sources-icon">
+                            <i class="bi bi-link-45deg"></i>
+                        </div>
+                        <h3 class="response-sources-title mb-0">Sources</h3>
+                        <span class="response-sources-count">${sources.length}</span>
                     </div>
-                    <h3 class="response-sources-title">Sources</h3>
-                    <span class="response-sources-count">${sources.length}</span>
+                    <!-- Mobile Close Button -->
+                    <button class="mobile-sources-close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
                 <div class="response-sources-list">
                     ${sourceCards}
@@ -245,6 +256,35 @@ class ResponseHandler {
                 }
             });
         });
+
+        // Mobile Sources Toggle
+        const mobileSourcesToggle = responseElement.querySelector('.mobile-sources-toggle');
+        const sourcesSidebar = responseElement.querySelector('.response-sources-sidebar');
+        const mobileSourcesClose = responseElement.querySelector('.mobile-sources-close');
+
+        if (mobileSourcesToggle && sourcesSidebar) {
+            mobileSourcesToggle.addEventListener('click', () => {
+                sourcesSidebar.classList.add('active');
+                // Create overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'mobile-sources-overlay';
+                document.body.appendChild(overlay);
+
+                // Overlay click to close
+                overlay.addEventListener('click', () => {
+                    sourcesSidebar.classList.remove('active');
+                    overlay.remove();
+                });
+
+                // Handle Close Button
+                if (mobileSourcesClose) {
+                    mobileSourcesClose.addEventListener('click', () => {
+                        sourcesSidebar.classList.remove('active');
+                        overlay.remove();
+                    });
+                }
+            });
+        }
     }
 
     /**
@@ -324,7 +364,7 @@ class ResponseHandler {
     /**
      * Generate dummy sources data for testing
      */
-    static generateDummySources(count = 10) {
+    static generateDummySources(count = 20) {
         const sources = [];
         const sourceTemplates = [
             {
